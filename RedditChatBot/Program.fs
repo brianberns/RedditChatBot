@@ -56,9 +56,20 @@ else
 
 let reddit =
     RedditClient(
-        appId = "TQfEWCI3esJvFE95y0SxIw",
+        appId = "fVstFww14kdp4hFRJCCzdg",
         refreshToken = settings.Reddit.RefreshToken,
         appSecret = settings.Reddit.AppSecret)
 
-printfn $"Username: {reddit.Account.Me.Name}"
-printfn $"Cake Day: {reddit.Account.Me.Created}"
+let selfPost = reddit.SelfPost("t3_11glnkd")   // "I am a ChatGPT bot"
+
+let flagOn = selfPost.Comments.MonitorNew()
+assert(flagOn)
+
+selfPost.Comments.NewUpdated.Add(fun evt ->
+    for comment in evt.Added do
+        printfn $"Comment added: {comment.Body}")
+
+System.Console.ReadLine() |> ignore
+
+let flagOff = selfPost.Comments.MonitorNew()
+assert(not flagOff)
