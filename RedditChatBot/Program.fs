@@ -1,5 +1,6 @@
 ﻿namespace RedditChatBot
 
+open System
 open Microsoft.Extensions.Configuration
 
 (*
@@ -32,26 +33,39 @@ else
     printfn $"Error: {resp.Error.Message}"
 *)
 
-module Program =
+module Reddit =
 
-    let settings = Settings.get
+    let private settings = Settings.get.Reddit
 
-    let reddit =
+    let client =
         RedditClient(
             appId = "fVstFww14kdp4hFRJCCzdg",
-            refreshToken = settings.Reddit.RefreshToken,
-            appSecret = settings.Reddit.AppSecret)
+            refreshToken = settings.RefreshToken,
+            appSecret = settings.AppSecret)
 
-    let selfPost = reddit.SelfPost("t3_11glnkd")   // "I am a ChatGPT bot"
+    let monitor (post : Controllers.Post) callback =
 
-    let flagOn = selfPost.Comments.MonitorNew()
-    assert(flagOn)
+        let flag = post.Comments.MonitorNew()
+        assert(flag)
 
-    selfPost.Comments.NewUpdated.Add(fun evt ->
-        for comment in evt.Added do
-            printfn $"Comment added: {comment.Body}")
+        post.Comments.NewUpdated.Add(callback)
 
-    System.Console.ReadLine() |> ignore
+        {
+            new IDisposable with
+                member _.Dispose() =
+                    let flagOff = post.Comments.MonitorNew()
+                    assert(not flagOff)
+        }
 
-    let flagOff = selfPost.Comments.MonitorNew()
-    assert(not flagOff)
+module Program =
+
+    [<EntryPoint>]
+    let main args =
+        use _ =
+            let post = Reddit.client.Post("t3_11glnkd")   // "I am a ChatGPT bot"
+            Reddit.monitor post (fun evt ->
+                for comment in evt.Added do
+                    printfn $"Comment added: {comment.Body}")
+
+        Console.ReadLine() |> ignore
+        0
