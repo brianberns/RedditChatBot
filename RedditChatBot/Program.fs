@@ -1,7 +1,6 @@
 ﻿namespace RedditChatBot
 
 open System
-open Microsoft.Extensions.Configuration
 
 (*
 open OpenAI.GPT3
@@ -9,8 +8,6 @@ open OpenAI.GPT3.Managers
 open OpenAI.GPT3.ObjectModels
 open OpenAI.GPT3.ObjectModels.RequestModels
 *)
-
-open Reddit
 
 (*
 let service =
@@ -32,30 +29,6 @@ if resp.Successful then
 else
     printfn $"Error: {resp.Error.Message}"
 *)
-
-module Reddit =
-
-    let private settings = Settings.get.Reddit
-
-    let client =
-        RedditClient(
-            appId = "fVstFww14kdp4hFRJCCzdg",
-            refreshToken = settings.RefreshToken,
-            appSecret = settings.AppSecret)
-
-    let monitor (post : Controllers.Post) callback =
-
-        let flag = post.Comments.MonitorNew()
-        assert(flag)
-
-        post.Comments.NewUpdated.Add(callback)
-
-        {
-            new IDisposable with
-                member _.Dispose() =
-                    let flagOff = post.Comments.MonitorNew()
-                    assert(not flagOff)
-        }
 
 module Program =
 
