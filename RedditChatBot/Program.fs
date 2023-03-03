@@ -38,7 +38,8 @@ module Program =
             let post = Reddit.client.Post("t3_11glnkd")   // "I am a ChatGPT bot"
             Reddit.monitor post (fun evt ->
                 for comment in evt.Added do
-                    printfn $"Comment added: {comment.Body}")
+                    let response = Chat.chat comment.Body
+                    printfn "%s" response)
 
         Console.ReadLine() |> ignore
         0
