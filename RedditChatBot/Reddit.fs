@@ -18,11 +18,13 @@ module Reddit =
         let flag = post.Comments.MonitorNew()
         assert(flag)
 
-        post.Comments.NewUpdated.Add(callback)
+        post.Comments.NewUpdated.Add(fun evt ->
+            for comment in evt.Added do
+                callback comment)
 
         {
             new IDisposable with
                 member _.Dispose() =
-                    let flagOff = post.Comments.MonitorNew()
-                    assert(not flagOff)
+                    let flag = post.Comments.MonitorNew()
+                    assert(not flag)
         }
