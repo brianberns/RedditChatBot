@@ -1,4 +1,6 @@
-﻿open Microsoft.Extensions.Configuration
+﻿namespace RedditChatBot
+
+open Microsoft.Extensions.Configuration
 
 (*
 open OpenAI.GPT3
@@ -8,30 +10,6 @@ open OpenAI.GPT3.ObjectModels.RequestModels
 *)
 
 open Reddit
-
-type RedditSettings =
-    {
-        RefreshToken : string
-        AppSecret : string
-    }
-
-type OpenAiSettings =
-    {
-        ApiKey : string
-    }
-
-[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
-type Settings =
-    {
-        Reddit : RedditSettings
-        OpenAi : OpenAiSettings
-    }
-
-let settings =
-    ConfigurationBuilder()
-        .AddJsonFile("appsettings.json")
-        .Build()
-        .Get<Settings>()
 
 (*
 let service =
@@ -54,22 +32,26 @@ else
     printfn $"Error: {resp.Error.Message}"
 *)
 
-let reddit =
-    RedditClient(
-        appId = "fVstFww14kdp4hFRJCCzdg",
-        refreshToken = settings.Reddit.RefreshToken,
-        appSecret = settings.Reddit.AppSecret)
+module Program =
 
-let selfPost = reddit.SelfPost("t3_11glnkd")   // "I am a ChatGPT bot"
+    let settings = Settings.get
 
-let flagOn = selfPost.Comments.MonitorNew()
-assert(flagOn)
+    let reddit =
+        RedditClient(
+            appId = "fVstFww14kdp4hFRJCCzdg",
+            refreshToken = settings.Reddit.RefreshToken,
+            appSecret = settings.Reddit.AppSecret)
 
-selfPost.Comments.NewUpdated.Add(fun evt ->
-    for comment in evt.Added do
-        printfn $"Comment added: {comment.Body}")
+    let selfPost = reddit.SelfPost("t3_11glnkd")   // "I am a ChatGPT bot"
 
-System.Console.ReadLine() |> ignore
+    let flagOn = selfPost.Comments.MonitorNew()
+    assert(flagOn)
 
-let flagOff = selfPost.Comments.MonitorNew()
-assert(not flagOff)
+    selfPost.Comments.NewUpdated.Add(fun evt ->
+        for comment in evt.Added do
+            printfn $"Comment added: {comment.Body}")
+
+    System.Console.ReadLine() |> ignore
+
+    let flagOff = selfPost.Comments.MonitorNew()
+    assert(not flagOff)

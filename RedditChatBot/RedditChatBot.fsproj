@@ -9,6 +9,7 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Compile Include="Settings.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
