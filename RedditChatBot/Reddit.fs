@@ -10,4 +10,5 @@ module Reddit =
         RedditClient(
             appId = "fVstFww14kdp4hFRJCCzdg",
             refreshToken = settings.RefreshToken,
-            appSecret = settings.AppSecret)
+            appSecret = settings.AppSecret,
+            userAgent = "RedditChatBot:v1.0 (by /u/brianberns)")
