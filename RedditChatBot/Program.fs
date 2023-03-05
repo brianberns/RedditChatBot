@@ -4,7 +4,7 @@ open Reddit.Controllers
 
 module Program =
 
-    let userName = "EverydayChatBot"
+    let me = Reddit.client.User("EverydayChatBot")
 
     /// Replies to the given comment, if necessary.
     let private reply (comment : Comment) =
@@ -12,7 +12,7 @@ module Program =
         let comment = comment.About()             // get full properties
 
             // ignore my own comments
-        if comment.Author <> userName
+        if comment.Author <> me.Name
             && comment.Depth < 5                  // avoid infinite recursion with another bot
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
@@ -20,20 +20,17 @@ module Program =
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
-                        child.Author = userName)
+                        child.Author = me.Name)
 
                 // if not, create a reply
             if not handled then
                 printfn ""
-                printfn $"User says: {comment.Body}"
+                printfn $"Q: {comment.Body}"
                 let replyBody = Chat.chat comment.Body
-                printfn $"I say: {replyBody}"
+                printfn $"A: {replyBody}"
                 comment.Reply(replyBody) |> ignore
 
-    [<EntryPoint>]
-    let main args =
-
-        let me = Reddit.client.User(userName)
+    let rec run () =
            
             // reply to any top-level comments in my posts
         for post in me.PostHistory do
@@ -45,4 +42,7 @@ module Program =
             for comment in myComment.About().Replies do
                 reply comment
 
-        0
+            // loop
+        run ()
+
+    run ()
