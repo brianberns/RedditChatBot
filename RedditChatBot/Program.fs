@@ -79,11 +79,17 @@ module Program =
                 for comment in post.Comments.GetNew() do
                     reply comment
 
-                    // reply to replies to my recent comments
-                for myComment in me.GetCommentHistory(sort="new") do
-                    if myComment.Created >= post.Created then   // ignore comments from previous posts
-                        for comment in myComment.About().Replies do
-                            reply comment
+                    // reply to replies to my recent comments on this post
+                let commentHistory =
+                    me.GetCommentHistory(
+                        context = 0,
+                        sort = "new")
+                for myComment in commentHistory do
+                    if myComment.Created >= post.Created then
+                        let myComment' = myComment.About()
+                        if myComment'.Root.Id = post.Id then
+                            for comment in myComment'.Replies do
+                                reply comment
 
             with exn ->
                 printDivider ()
