@@ -7,6 +7,11 @@ module Program =
 
     let me = Reddit.client.User("EverydayChatBot")
 
+    let private printDivider () =
+        printfn ""
+        printfn "----------------------------------------"
+        printfn ""
+
     /// Replies to the given comment, if necessary.
     let private reply (comment : Comment) =
 
@@ -14,7 +19,6 @@ module Program =
 
             // ignore my own comments
         if comment.Author <> me.Name
-            && comment.Depth < 5                  // avoid infinite recursion with another bot
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
                 // have I already replied to this comment?
@@ -28,12 +32,12 @@ module Program =
 
                     // construct user input
                 let query = $"{comment.Author} says {comment.Body}"
-                printfn ""
-                printfn "----------------------------------------"
+                printDivider ()
                 printfn $"Q: {query}"
 
                     // get chat response
-                let response = Chat.chat query
+                // let response = Chat.chat query
+                let response = "dummy response"
                 printfn ""
                 printfn $"A: {response}"
                 comment.Reply(response) |> ignore
@@ -41,12 +45,14 @@ module Program =
     /// Runs a chat session.
     let rec run () =
 
+            // get my latest post
+        let post =
+            // let user = me
+            let user = Reddit.client.User("bernsrite")
+            user .GetPostHistory("submitted", sort="new", limit=1)
+                |> Seq.exactlyOne
+
         try
-                // get my latest post
-            let post =
-                me.GetPostHistory("submitted", sort="new", limit=1)
-                    |> Seq.exactlyOne
-           
                 // reply to any top-level comments in the post
             for comment in post.Comments.GetNew() do
                 reply comment
@@ -56,7 +62,9 @@ module Program =
                 if myComment.Created >= post.Created then   // ignore comments from previous posts
                     for comment in myComment.About().Replies do
                         reply comment
+
         with exn ->
+            printDivider ()
             printfn $"{exn}"
             Thread.Sleep(10000)   // wait, then continue
 
