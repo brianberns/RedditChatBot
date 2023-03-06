@@ -13,14 +13,14 @@ module Chat =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
 
-    let chat text =
+    let chat content =
 
         let req =
             ChatCompletionCreateRequest(
                 Messages =
                     ResizeArray [
                         ChatMessage.FromSystem("Reply in the style of a typical Reddit user")
-                        ChatMessage.FromUser(text)
+                        ChatMessage.FromUser(content)
                     ],
                 Model = Models.ChatGpt3_5Turbo)
         let resp =

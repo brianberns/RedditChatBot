@@ -24,23 +24,35 @@ module Program =
 
                 // if not, create a reply
             if not handled then
+
+                    // construct user input
+                let query = $"{comment.Author} says {comment.Body}"
                 printfn ""
-                printfn $"Q: {comment.Body}"
-                let replyBody = Chat.chat comment.Body
-                printfn $"A: {replyBody}"
-                comment.Reply(replyBody) |> ignore
+                printfn "----------------------------------------"
+                printfn $"Q: {query}"
+
+                    // get chat response
+                let response = Chat.chat query
+                printfn ""
+                printfn $"A: {response}"
+                comment.Reply(response) |> ignore
 
     let rec run () =
+
+            // get my latest post
+        let post =
+            me.GetPostHistory("submitted", sort="new", limit=1)
+                |> Seq.exactlyOne
            
-            // reply to any top-level comments in my posts
-        for post in me.PostHistory do
-            for comment in post.Comments.GetNew() do
-                reply comment
+            // reply to any top-level comments in the post
+        for comment in post.Comments.GetNew() do
+            reply comment
 
             // reply to replies to my recent comments
-        for myComment in me.CommentHistory do
-            for comment in myComment.About().Replies do
-                reply comment
+        for myComment in me.GetCommentHistory(sort="new") do
+            if myComment.Created >= post.Created then   // ignore my older comments
+                for comment in myComment.About().Replies do
+                    reply comment
 
             // loop
         run ()
