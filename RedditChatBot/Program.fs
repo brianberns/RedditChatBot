@@ -26,7 +26,7 @@ module Program =
             | _ -> comment.Body
 
     /// Gets ancestor comments for context.
-    let private getContext comment =
+    let private getContext depth comment =
 
         let rec loop depth comment =   // to-do: use fewer round-trips
             [
@@ -45,8 +45,10 @@ module Program =
             ]
 
         comment
-            |> loop 5
+            |> loop depth
             |> List.rev
+
+    let private maxDepth = 5
 
     /// Replies to the given comment, if necessary.
     let private reply comment =
@@ -64,17 +66,22 @@ module Program =
                 // if not, create a reply
             if not handled then
 
-                    // construct user query
-                let context = getContext comment
+                    // get comment context
+                let context = getContext maxDepth comment
                 assert(context |> Seq.last |> fst = Role.User)
-                printDivider ()
-                printfn $"Q: {context |> Seq.last |> snd}"
 
-                    // get chat response
-                let response = Chat.chat context
-                printfn ""
-                printfn $"A: {response}"
-                comment.Reply(response) |> ignore
+                    // avoid deeply nested threads
+                if context.Length <= maxDepth then
+
+                        // construct user query
+                    printDivider ()
+                    printfn $"Q: {context |> Seq.last |> snd}"
+
+                        // get chat response
+                    let response = Chat.chat context
+                    printfn ""
+                    printfn $"A: {response}"
+                    comment.Reply(response) |> ignore
 
     /// Runs a chat session using the given post.
     let private run (post : Post) =
