@@ -1,6 +1,5 @@
 ﻿namespace RedditChatBot
 
-open System
 open System.Threading
 open Reddit.Controllers
 
