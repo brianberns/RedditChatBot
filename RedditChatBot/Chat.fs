@@ -5,6 +5,20 @@ open OpenAI.GPT3.Managers
 open OpenAI.GPT3.ObjectModels
 open OpenAI.GPT3.ObjectModels.RequestModels
 
+[<RequireQualifiedAccess>]
+type Role =
+    | System
+    | User
+    | Assistance
+
+module Role =
+
+    /// Creates chat message depending on role.
+    let createMessage = function
+        | System -> ChatMessage.FromSystem
+        | User -> ChatMessage.FromUser
+        | Assistance -> ChatMessage.FromAssistance
+
 module Chat =
 
     let private settings = Settings.get.OpenAi
@@ -13,14 +27,17 @@ module Chat =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
 
-    let chat content =
+    let chat context =
 
         let req =
             ChatCompletionCreateRequest(
                 Messages =
                     ResizeArray [
-                        ChatMessage.FromSystem("Reply in the style of a typical Reddit user")
-                        ChatMessage.FromUser(content)
+                        Role.createMessage
+                            Role.System
+                            "Reply in the style of a typical Reddit user"
+                        for (role, content) in context do
+                            Role.createMessage role content
                     ],
                 Model = Models.ChatGpt3_5Turbo)
         let resp =
