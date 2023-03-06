@@ -98,7 +98,7 @@ module Program =
                         sort = "new")
                 for myComment in commentHistory do
                     if myComment.Created >= post.Created then
-                        let myComment' = myComment.Info()   // to-do: figure out why About() fails sometimes
+                        let myComment' = myComment.Info()   // to-do: use About() if race condition can be avoided?
                         if myComment'.Root.Id = post.Id then
                             for comment in myComment'.Replies do
                                 reply comment
