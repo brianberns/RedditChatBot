@@ -53,7 +53,7 @@ module Program =
 
                 // reply to replies to my recent comments
             for myComment in me.GetCommentHistory(sort="new") do
-                if myComment.Created >= post.Created then   // ignore my older comments
+                if myComment.Created >= post.Created then   // ignore comments from previous posts
                     for comment in myComment.About().Replies do
                         reply comment
         with exn ->
