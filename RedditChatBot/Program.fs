@@ -8,12 +8,6 @@ module Program =
     /// My user account.
     let me = Reddit.client.User("EverydayChatBot")
 
-    /// Prints a divider to the screen.
-    let private printDivider () =
-        printfn ""
-        printfn "----------------------------------------"
-        printfn ""
-
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) =
         if comment.Author = me.Name then Role.System
@@ -53,6 +47,12 @@ module Program =
     /// Maximum context depth.
     let private maxDepth = 3
 
+    /// Prints a divider to the screen.
+    let private printDivider () =
+        printfn ""
+        printfn "----------------------------------------"
+        printfn ""
+
     /// Replies to the given comment, if necessary.
     let private reply comment =
 
@@ -85,7 +85,7 @@ module Program =
                     printfn $"A: {response}"
                     comment.Reply(response) |> ignore
 
-    /// Runs a chat session using the given post.
+    /// Runs a chat session in the given post.
     let private run (post : Post) =
 
         let rec loop () =   // run in a simple loop for now
@@ -117,9 +117,7 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-        // let user = me
-        let user = Reddit.client.User("bernsrite")
-        user.GetPostHistory("submitted", sort="new", limit=1)   // get my latest post
+        me.GetPostHistory("submitted", sort="new", limit=1)   // get my latest post
             |> Seq.exactlyOne
             |> run
         0
