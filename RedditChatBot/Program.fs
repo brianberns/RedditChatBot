@@ -25,7 +25,9 @@ module Program =
             | Role.User -> $"{comment.Author} says {comment.Body}"
             | _ -> comment.Body
 
-    /// Gets ancestor comments for context.
+    /// Gets ancestor comments for context. The given comment
+    /// has depth 0, so a full context will have N+1 entries,
+    /// where N is the given depth.
     let private getContext depth comment =
 
         let rec loop depth comment =   // to-do: use fewer round-trips
@@ -48,6 +50,7 @@ module Program =
             |> loop depth
             |> List.rev
 
+    /// Maximum context depth.
     let private maxDepth = 3
 
     /// Replies to the given comment, if necessary.
