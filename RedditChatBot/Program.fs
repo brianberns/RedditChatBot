@@ -43,7 +43,7 @@ module Program =
     /// Replies to the given comment, if necessary.
     let private reply (comment : Comment) =
 
-        let comment = comment.About()             // get full properties (expensive)
+        // let comment = comment.About()             // get full properties (expensive)
 
             // ignore my own comments
         if getRole comment <> Role.System
