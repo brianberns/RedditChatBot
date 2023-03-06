@@ -48,7 +48,7 @@ module Program =
             |> loop depth
             |> List.rev
 
-    let private maxDepth = 5
+    let private maxDepth = 3
 
     /// Replies to the given comment, if necessary.
     let private reply comment =
@@ -69,14 +69,13 @@ module Program =
                     // get comment context
                 let context = getContext maxDepth comment
                 assert(context |> Seq.last |> fst = Role.User)
+                printDivider ()
+                printfn $"Q: {context |> Seq.last |> snd}"
 
                     // avoid deeply nested threads
-                if context.Length <= maxDepth then
-
-                        // construct user query
-                    printDivider ()
-                    printfn $"Q: {context |> Seq.last |> snd}"
-
+                if context.Length > maxDepth then
+                    printfn "[Max depth exceeded]"
+                else
                         // get chat response
                     let response = Chat.chat context
                     printfn ""
