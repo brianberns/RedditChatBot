@@ -42,33 +42,35 @@ module Program =
                 printfn $"A: {response}"
                 comment.Reply(response) |> ignore
 
-    /// Runs a chat session.
-    let rec run () =
+    /// Runs a chat session using the given post.
+    let private run (post : Post) =
 
-            // get my latest post
-        let post =
-            // let user = me
-            let user = Reddit.client.User("bernsrite")
-            user .GetPostHistory("submitted", sort="new", limit=1)
-                |> Seq.exactlyOne
+        let rec loop () =   // run in a simple loop for now
+            try
+                    // reply to any top-level comments in the post
+                for comment in post.Comments.GetNew() do
+                    reply comment
 
-        try
-                // reply to any top-level comments in the post
-            for comment in post.Comments.GetNew() do
-                reply comment
+                    // reply to replies to my recent comments
+                for myComment in me.GetCommentHistory(sort="new") do
+                    if myComment.Created >= post.Created then   // ignore comments from previous posts
+                        for comment in myComment.About().Replies do
+                            reply comment
 
-                // reply to replies to my recent comments
-            for myComment in me.GetCommentHistory(sort="new") do
-                if myComment.Created >= post.Created then   // ignore comments from previous posts
-                    for comment in myComment.About().Replies do
-                        reply comment
+            with exn ->
+                printDivider ()
+                printfn $"{exn}"
+                Thread.Sleep(10000)   // wait, then continue
 
-        with exn ->
-            printDivider ()
-            printfn $"{exn}"
-            Thread.Sleep(10000)   // wait, then continue
+            loop ()
 
-            // loop (for now)
-        run ()
+        loop ()
 
-    run ()
+    [<EntryPoint>]
+    let main args =
+        // let user = me
+        let user = Reddit.client.User("bernsrite")
+        user.GetPostHistory("submitted", sort="new", limit=1)   // get my latest post
+            |> Seq.exactlyOne
+            |> run
+        0
