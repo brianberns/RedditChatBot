@@ -1,5 +1,6 @@
 ﻿namespace RedditChatBot
 
+open System.Threading
 open Reddit.Controllers
 
 module Program =
@@ -37,24 +38,29 @@ module Program =
                 printfn $"A: {response}"
                 comment.Reply(response) |> ignore
 
+    /// Runs a chat session.
     let rec run () =
 
-            // get my latest post
-        let post =
-            me.GetPostHistory("submitted", sort="new", limit=1)
-                |> Seq.exactlyOne
+        try
+                // get my latest post
+            let post =
+                me.GetPostHistory("submitted", sort="new", limit=1)
+                    |> Seq.exactlyOne
            
-            // reply to any top-level comments in the post
-        for comment in post.Comments.GetNew() do
-            reply comment
+                // reply to any top-level comments in the post
+            for comment in post.Comments.GetNew() do
+                reply comment
 
-            // reply to replies to my recent comments
-        for myComment in me.GetCommentHistory(sort="new") do
-            if myComment.Created >= post.Created then   // ignore my older comments
-                for comment in myComment.About().Replies do
-                    reply comment
+                // reply to replies to my recent comments
+            for myComment in me.GetCommentHistory(sort="new") do
+                if myComment.Created >= post.Created then   // ignore my older comments
+                    for comment in myComment.About().Replies do
+                        reply comment
+        with exn ->
+            printfn $"{exn}"
+            Thread.Sleep(10000)   // wait, then continue
 
-            // loop
+            // loop (for now)
         run ()
 
     run ()
