@@ -6,44 +6,51 @@ open Reddit.Controllers
 
 module Program =
 
+    /// My user account.
     let me = Reddit.client.User("EverydayChatBot")
 
+    /// Prints a divider to the screen.
     let private printDivider () =
         printfn ""
         printfn "----------------------------------------"
         printfn ""
 
+    /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) =
         if comment.Author = me.Name then Role.System
         else Role.User
 
+    /// Converts the given comment into chat content.
     let private getContent role (comment : Comment) =
         match role with
             | Role.User -> $"{comment.Author} says {comment.Body}"
             | _ -> comment.Body
 
+    /// Gets ancestor comments for context.
     let private getContext comment =
 
-        let rec loop depth comment =
+        let rec loop depth comment =   // to-do: use fewer round-trips
             [
+                    // this comment
                 let role = getRole comment
                 let content = getContent role comment
                 yield role, content
 
+                    // ancestor comments
                 if depth > 0 then
                     let parentFullname = comment.ParentFullname
                     if parentFullname.StartsWith("t1_") then
-                        let parent = Reddit.client.Comment(parentFullname).About()
+                        let parent =
+                            Reddit.client.Comment(parentFullname).About()
                         yield! loop (depth - 1) parent
             ]
 
-        loop 5 comment
+        comment
+            |> loop 5
             |> List.rev
 
     /// Replies to the given comment, if necessary.
-    let private reply (comment : Comment) =
-
-        // let comment = comment.About()             // get full properties (expensive)
+    let private reply comment =
 
             // ignore my own comments
         if getRole comment <> Role.System
