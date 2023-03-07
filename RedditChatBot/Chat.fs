@@ -5,6 +5,7 @@ open OpenAI.GPT3.Managers
 open OpenAI.GPT3.ObjectModels
 open OpenAI.GPT3.ObjectModels.RequestModels
 
+/// Message roles.
 [<RequireQualifiedAccess>]
 type Role =
 
@@ -27,8 +28,10 @@ module Role =
 
 module Chat =
 
+    /// Chat settings.
     let private settings = Settings.get.OpenAi
 
+    /// Chat service.
     let service =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
@@ -41,6 +44,8 @@ module Chat =
 
     /// Gets a reponse to the given message context.
     let chat context =
+
+            // build the request
         let req =
             ChatCompletionCreateRequest(
                 Messages =
@@ -50,6 +55,8 @@ module Chat =
                             Role.createMessage role content
                     ],
                 Model = Models.ChatGpt3_5Turbo)
+
+            // wait for the response (single-threaded, no point in getting fancy)
         let resp =
             service.ChatCompletion.CreateCompletion(req).Result
         if resp.Successful then
