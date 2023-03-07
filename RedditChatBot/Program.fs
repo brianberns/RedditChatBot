@@ -54,7 +54,9 @@ module Program =
         printfn ""
 
     /// Replies to the given comment, if necessary.
-    let private reply comment =
+    let private reply (comment : Comment) =
+
+        let comment = comment.About()   // make sure we have full details
 
             // ignore my own comments
         if getRole comment <> Role.System
