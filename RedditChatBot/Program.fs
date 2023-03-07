@@ -45,7 +45,7 @@ module Program =
             |> List.rev
 
     /// Maximum context depth.
-    let private maxDepth = 3
+    let private maxDepth = 5
 
     /// Prints a divider to the screen.
     let private printDivider () =
