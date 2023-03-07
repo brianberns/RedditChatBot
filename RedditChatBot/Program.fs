@@ -103,9 +103,9 @@ module Program =
                         sort = "new")
                 for myComment in commentHistory do
                     if myComment.Created >= post.Created then
-                        let myComment' = myComment.Info()   // to-do: use About() if race condition can be avoided?
-                        if myComment'.Root.Id = post.Id then
-                            for comment in myComment'.Replies do
+                        let myComment = myComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
+                        if myComment.Root.Id = post.Id then
+                            for comment in myComment.Replies do
                                 reply comment
 
             with exn ->
@@ -117,6 +117,7 @@ module Program =
 
         loop ()
 
+    /// Runs the bot.
     [<EntryPoint>]
     let main args =
         me.GetPostHistory("submitted", sort="new", limit=1)   // get my latest post
