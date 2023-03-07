@@ -82,7 +82,7 @@ module Program =
                     printfn "[Max depth exceeded]"
                 else
                         // get chat response
-                    let response = Chat.chat context
+                    let response = (Chat.chat context).Trim()   // some responses start with whitespace - why?
                     printfn ""
                     printfn $"A: {response}"
                     comment.Reply(response) |> ignore
