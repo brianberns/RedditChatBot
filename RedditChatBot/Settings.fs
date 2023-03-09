@@ -5,8 +5,9 @@ open Microsoft.Extensions.Configuration
 /// Reddit settings associated with this app. Don't share these!
 type RedditSettings =
     {
-        RefreshToken : string
+        ApiKey : string
         AppSecret : string
+        RefreshToken : string
     }
 
 /// OpenAI settings associated with this app. Don't share these!

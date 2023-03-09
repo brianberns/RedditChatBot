@@ -10,7 +10,7 @@ module Reddit =
     /// Reddit client.
     let client =
         RedditClient(
-            appId = "fVstFww14kdp4hFRJCCzdg",                      // no harm in sharing this
+            appId = settings.ApiKey,
             refreshToken = settings.RefreshToken,
             appSecret = settings.AppSecret,
-            userAgent = "RedditChatBot:v1.0 (by /u/brianberns)")   // this is the format that Reddit suggests (more or less)
+            userAgent = "AI-chat-bot:v1.0 (by /u/brianberns)")   // this is the format that Reddit suggests (more or less)
