@@ -141,8 +141,9 @@ module FriendlyChatBot =
 
                     // submit chat response
                 printDivider ()
-                printfn $"Post title: {post.Title}"
-                printfn $"Post text: {post.SelfText}"
+                printfn "New post"
+                for (_, content) in history do
+                    printfn $"User: {content}"
                 submitComment post.Reply history
 
     /// Maximum number of nested bot replies in thread.
@@ -210,6 +211,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11nv492")
+        let post = Reddit.client.SelfPost("t3_11nxtpt")
         submitTopLevelComment post
         monitorReplies ()
