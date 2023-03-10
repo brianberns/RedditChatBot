@@ -12,7 +12,7 @@ module Footer =
 
     /// Adds a footer to the given text.
     let add text =
-        $"{text}\n\n{hr}\n\n^(The comment above was generated automatically. I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/).)"
+        $"{text}\n\n{hr}\n\nThe comment above was generated automatically. I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/)."
 
     /// Removes the footer (if any) from the given text.
     let remove (text : string) =
