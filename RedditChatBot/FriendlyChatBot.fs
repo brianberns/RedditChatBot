@@ -23,6 +23,12 @@ module Footer =
 
 module FriendlyChatBot =
 
+    (*
+     * As a general rule, we call Post.About() and Comment.Info()
+     * defensively to make sure we have the full details of a thing.
+     * Unfortunately, Comment.About() seems to have a race condition.
+     *)
+
     /// Bot's user account.
     let bot = Reddit.client.User("friendly-chat-bot")
 
@@ -43,6 +49,7 @@ module FriendlyChatBot =
 
     /// Converts the given post's content into a history.
     let private getPostHistory (post : SelfPost) =
+        let post = post.About()
         [
             Role.User, say post.Author post.Title
             if hasContent post.SelfText then
@@ -53,6 +60,7 @@ module FriendlyChatBot =
     let private getCommentHistory comment =
 
         let rec loop (comment : Comment) =   // to-do: use fewer round-trips
+            let comment = comment.Info()
             [
                     // this comment
                 let role = getRole comment.Author
@@ -69,14 +77,12 @@ module FriendlyChatBot =
                         let parent =
                             Reddit.client
                                 .Comment(comment.ParentFullname)
-                                .Info()
                         yield! loop parent
 
                     | ThingType.Post ->
                         let post =
                             Reddit.client
                                 .SelfPost(comment.ParentFullname)
-                                .About()
                         yield! getPostHistory post
 
                     | ThingType.Other ->
@@ -106,8 +112,10 @@ module FriendlyChatBot =
             |> submit
             |> ignore
 
-    /// Submits a top-level comment on the given post.
+    /// Submits a top-level comment on the given post, if necessary.
     let private submitTopLevelComment (post : SelfPost) =
+
+        let post = post.About()
 
             // don't comment on my own posts
         if getRole post.Author = Role.User then
@@ -124,8 +132,7 @@ module FriendlyChatBot =
 
     /// Replies to the given comment, if necessary.
     let private submitReply (comment : Comment) =
-
-        let comment = comment.Info()   // make sure we have full details (Comment.About seems to have a race condition)
+        let comment = comment.Info()
 
             // ignore bot's own comments
         if getRole comment.Author <> Role.System
@@ -160,11 +167,13 @@ module FriendlyChatBot =
 
     let rec private monitorReplies (post : Post) =
 
+        let post = post.About()
+
         try
             let myCommentHistory = bot.GetCommentHistory()
             for myComment in myCommentHistory do
                 if myComment.Created >= post.Created then
-                    let myComment = myComment.Info()   // make sure we have full details
+                    let myComment = myComment.Info()
                     if myComment.Root.Id = post.Id then
                         let userComments =
                             myComment.Replies
@@ -182,6 +191,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11nhasc").About()
+        let post = Reddit.client.SelfPost("t3_11nhasc")
         submitTopLevelComment post
         monitorReplies post
