@@ -1,6 +1,8 @@
 ﻿namespace RedditChatBot
 
+open System
 open System.Threading
+
 open Reddit.Controllers
 
 module FriendlyChatBot =
@@ -8,44 +10,62 @@ module FriendlyChatBot =
     /// My user account.
     let me = Reddit.client.User("friendly-chat-bot")
 
-    /// Determines the role of the given comment's author.
-    let private getRole (comment : Comment) =
-        if comment.Author = me.Name then Role.System
+    let private getRole author =
+        if author = me.Name then Role.System
         else Role.User
 
-    /// Converts the given comment into chat content.
-    let private getContent role (comment : Comment) =
-        match role with
-            | Role.User -> $"{comment.Author} says {comment.Body}"
-            | _ -> comment.Body
+    let isNonEmpty =
+        String.IsNullOrWhiteSpace >> not
 
-    /// Gets ancestor comments for context. The given comment
-    /// has depth 0, so a full context will have N+1 entries,
-    /// where N is the given depth.
-    let private getContext depth comment =
+    let private say author text =
+        assert(isNonEmpty author)
+        assert(isNonEmpty text)
+        $"{author} says {text}"
 
-        let rec loop depth comment =   // to-do: use fewer round-trips
+    let private getPostHistory (post : SelfPost) =
+        [
+            Role.User, say post.Author post.Title
+            if isNonEmpty post.SelfText then
+                Role.User, say post.Author post.SelfText
+        ]
+
+    /// Gets ancestor comments in chronological order.
+    let private getCommentHistory comment =
+
+        let rec loop (comment : Comment) =   // to-do: use fewer round-trips
             [
                     // this comment
-                let role = getRole comment
-                let content = getContent role comment
+                let role = getRole comment.Author
+                let content =
+                    match role with
+                        | Role.User -> say comment.Author comment.Body
+                        | _ -> comment.Body
                 yield role, content
 
-                    // ancestor comments
-                if depth > 0 then
-                    let parentFullname = comment.ParentFullname
-                    if parentFullname.StartsWith("t1_") then
+                    // ancestors
+                let parentFullname = comment.ParentFullname
+                match parentFullname.Substring(0, 3) with
+
+                        // comment
+                    | "t1_" ->
                         let parent =
-                            Reddit.client.Comment(parentFullname).About()
-                        yield! loop (depth - 1) parent
+                            Reddit.client
+                                .Comment(parentFullname).
+                                About()
+                        yield! loop parent
+
+                        // post
+                    | "t3_" ->
+                        let post =
+                            Reddit.client.SelfPost(parentFullname)
+                        yield! getPostHistory post
+
+                        // other
+                    | prefix -> failwith $"Unexpected type: {prefix}"
             ]
 
-        comment
-            |> loop depth
+        loop comment
             |> List.rev
-
-    /// Maximum context depth.
-    let private maxDepth = 5
 
     /// Prints a divider to the screen.
     let private printDivider () =
@@ -59,78 +79,82 @@ module FriendlyChatBot =
         let comment = comment.About()   // make sure we have full details
 
             // ignore my own comments
-        if getRole comment <> Role.System
+        if getRole comment.Author <> Role.System
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
                 // have I already replied to this comment?
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
-                        getRole child = Role.System)
+                        getRole child.Author = Role.System)
 
                 // if not, create a reply
             if not handled then
 
-                    // get comment context
-                let context = getContext maxDepth comment
-                assert(context |> Seq.last |> fst = Role.User)
+                    // get comment history
+                let history = getCommentHistory comment
+                assert(history |> Seq.last |> fst = Role.User)
                 printDivider ()
-                printfn $"Q: {context |> Seq.last |> snd}"
+                printfn $"User: {history |> Seq.last |> snd}"
 
                     // avoid deeply nested threads
-                if context.Length > maxDepth then
-                    printfn "[Max depth exceeded]"
+                let nSystem =
+                    history
+                        |> Seq.where (fun (role, _) ->
+                            role = Role.System)
+                        |> Seq.length
+                if nSystem >= 3 then
+                    printfn ""
+                    printfn "Bot: [Max depth exceeded]"
                 else
                         // get chat response
-                    let response = (Chat.chat context).Trim()   // some responses start with whitespace - why?
+                    let response = Chat.chat history
                     printfn ""
-                    printfn $"A: {response}"
+                    printfn $"Bot: {response}"
                     comment.Reply(response) |> ignore
 
     let private submitTopLevelComment (post : SelfPost) =
+        assert (getRole post.Author = Role.User)
 
         printDivider ()
         printfn $"Post title: {post.Title}"
         printfn $"Post text: {post.SelfText}"
 
+            // comment on post
         let response =
-            let history =
-                [ post.Title; post.SelfText ]
-                    |> Seq.map (fun content -> Role.User, content)
-            (Chat.chat history).Trim()   // some responses start with whitespace - why?
+            getPostHistory post
+                |> Chat.chat
         printfn ""
-        printfn $"Response: {response}"
-        // post.Reply(response) |> ignore
+        printfn $"Bot: {response}"
+        post.Reply(response) |> ignore
 
-        (*
-        let rec loop () =   // run in a simple loop for now
-            try
+    let rec private monitorReplies (post : Post) =
 
-                    // reply to replies to my recent comments on this post
-                let commentHistory =
-                    me.GetCommentHistory(
-                        context = 0,
-                        sort = "new")
-                for myComment in commentHistory do
-                    if myComment.Created >= post.Created then
-                        let myComment = myComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
-                        if myComment.Root.Id = post.Id then
-                            for comment in myComment.Replies do
-                                reply comment
+        try
+            let commentHistory = me.GetCommentHistory()
+            for myComment in commentHistory do
+                if myComment.Created >= post.Created then
+                    let myComment = myComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
+                    if myComment.Root.Id = post.Id then
+                        let comments =
+                            myComment.Replies
+                                |> Seq.sortBy (fun reply -> reply.Created)
+                                |> Seq.truncate 3
+                        for comment in comments do
+                            reply comment
 
-            with exn ->
-                printDivider ()
-                printfn $"{exn}"
-                Thread.Sleep(10000)   // wait, then continue
+        with exn ->
+            printDivider ()
+            printfn $"{exn}"
+            Thread.Sleep(10000)   // wait, then continue
 
-            loop ()
-
-        loop ()
-        *)
+        monitorReplies post
 
     /// Runs the bot.
     let run () =
-        me.GetPostHistory("submitted", sort="new", limit=1)
-            |> Seq.cast<SelfPost>
-            |> Seq.exactlyOne
-            |> submitTopLevelComment
+        let post =
+            me.GetPostHistory("submitted", sort="new", limit=1)
+                |> Seq.cast<SelfPost>
+                |> Seq.exactlyOne
+        submitTopLevelComment post
+        monitorReplies post

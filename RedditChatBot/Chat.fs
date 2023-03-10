@@ -26,9 +26,6 @@ module Role =
         | Role.User -> ChatMessage.FromUser
         | Role.Assistance -> ChatMessage.FromAssistance
 
-/// Messages in chronological order.
-type History = seq<Role * string>
-
 module Chat =
 
     /// Chat settings.
@@ -46,7 +43,7 @@ module Chat =
             "Reply in the style of a kind Reddit user"
 
     /// Gets a reponse to the given message history.
-    let chat (history : History) =
+    let chat history =
 
             // build the request
         let req =
@@ -63,9 +60,7 @@ module Chat =
         let resp =
             service.ChatCompletion.CreateCompletion(req).Result
         if resp.Successful then
-            resp.Choices
-                |> Seq.map (fun choice ->
-                    choice.Message.Content)
-                |> Seq.exactlyOne
+            let choice = Seq.exactlyOne resp.Choices
+            choice.Message.Content.Trim()   // some responses start with whitespace - why?
         else
             failwith resp.Error.Message
