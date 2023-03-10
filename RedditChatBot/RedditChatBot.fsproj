@@ -12,7 +12,7 @@
     <Compile Include="Settings.fs" />
     <Compile Include="Reddit.fs" />
     <Compile Include="Chat.fs" />
-    <Compile Include="EverydayChatBot.fs" />
+    <Compile Include="FriendlyChatBot.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

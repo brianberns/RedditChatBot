@@ -26,6 +26,9 @@ module Role =
         | Role.User -> ChatMessage.FromUser
         | Role.Assistance -> ChatMessage.FromAssistance
 
+/// Messages in chronological order.
+type History = seq<Role * string>
+
 module Chat =
 
     /// Chat settings.
@@ -40,10 +43,10 @@ module Chat =
     let private prompt =
         Role.createMessage
             Role.System
-            "Reply in the style of a typical Reddit user"
+            "Reply in the style of a kind Reddit user"
 
-    /// Gets a reponse to the given message context.
-    let chat context =
+    /// Gets a reponse to the given message history.
+    let chat (history : History) =
 
             // build the request
         let req =
@@ -51,7 +54,7 @@ module Chat =
                 Messages =
                     ResizeArray [
                         prompt
-                        for (role, content) in context do
+                        for (role, content) in history do
                             Role.createMessage role content
                     ],
                 Model = Models.ChatGpt3_5Turbo)
