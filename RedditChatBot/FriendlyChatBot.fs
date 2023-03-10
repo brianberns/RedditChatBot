@@ -118,7 +118,7 @@ module FriendlyChatBot =
 
         let post = post.About()
 
-            // don't comment on my own posts
+            // don't comment on bot's own posts
         if getRole post.Author = Role.User then
 
                 // has bot already replied to this comment?
@@ -177,31 +177,36 @@ module FriendlyChatBot =
                 else
                     submitComment comment.Reply history
 
-    let rec private monitorReplies (post : Post) =
+    /// Maximum number of replies to a comment that the bot will
+    /// respond to.
+    let private maxWidth = 3
 
-        let post = post.About()
+    /// Monitor replies to the bot's comments.
+    let rec private monitorReplies () =
         try
-            let myCommentHistory = bot.GetCommentHistory()
-            for myComment in myCommentHistory do
-                if myComment.Created >= post.Created then
-                    let myComment = myComment.Info()
-                    if myComment.Root.Id = post.Id then
-                        let userComments =
-                            myComment.Replies
-                                |> Seq.sortBy (fun reply -> reply.Created)
-                                |> Seq.truncate 3
-                        for userComment in userComments do
-                            submitReply userComment
+                // scan bot's recent comments
+            for botComment in bot.GetCommentHistory() do
+                let botComment = botComment.Info()
+
+                    // find oldest user replies to bot's comment
+                let userComments =
+                    botComment.Replies
+                        |> Seq.sortBy (fun reply -> reply.Created)
+                        |> Seq.truncate maxWidth
+
+                    // reply to each user comment
+                for userComment in userComments do
+                    submitReply userComment
 
         with exn ->
             printDivider ()
             printfn $"{exn}"
             Thread.Sleep(10000)   // wait, then continue
 
-        monitorReplies post
+        monitorReplies ()
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11nhasc")
+        let post = Reddit.client.SelfPost("t3_11nh2ea")
         submitTopLevelComment post
-        monitorReplies post
+        monitorReplies ()
