@@ -121,12 +121,23 @@ module FriendlyChatBot =
             // don't comment on my own posts
         if getRole post.Author = Role.User then
 
-            printDivider ()
-            printfn $"Post title: {post.Title}"
-            printfn $"Post text: {post.SelfText}"
+                // has bot already replied to this comment?
+            let handled =
+                post.Comments.GetNew()   // to-do: what if the bot commented a long time ago?
+                    |> Seq.exists (fun child ->
+                        getRole child.Author = Role.System)
 
-                // submit chat response
-            submitComment post.Reply (getPostHistory post)
+                // if not, begin to create a reply
+            if not handled then
+
+                    // get post as a history
+                let history = getPostHistory post
+                printDivider ()
+                printfn $"Post title: {post.Title}"
+                printfn $"Post text: {post.SelfText}"
+
+                    // submit chat response
+                submitComment post.Reply history
 
     /// Maximum number of nested bot replies in thread.
     let private maxDepth = 3
