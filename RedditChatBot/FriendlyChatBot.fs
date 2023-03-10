@@ -24,7 +24,8 @@ module Footer =
 module FriendlyChatBot =
 
     (*
-     * As a general rule, we call Post.About() and Comment.Info()
+     * The Reddit.NET API presents a very leaky abstraction. As a
+     * general rule, we call Post.About() and Comment.Info()
      * defensively to make sure we have the full details of a thing.
      * Unfortunately, Comment.About() seems to have a race condition.
      *)
@@ -168,7 +169,6 @@ module FriendlyChatBot =
     let rec private monitorReplies (post : Post) =
 
         let post = post.About()
-
         try
             let myCommentHistory = bot.GetCommentHistory()
             for myComment in myCommentHistory do
