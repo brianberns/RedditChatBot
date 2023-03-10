@@ -59,7 +59,7 @@ module FriendlyChatBot =
                         let post =
                             Reddit.client
                                 .SelfPost(parentFullname)
-                                .Info()
+                                .About()
                         yield! getPostHistory post
 
                         // other
@@ -78,7 +78,7 @@ module FriendlyChatBot =
     /// Replies to the given comment, if necessary.
     let private reply (comment : Comment) =
 
-        let comment = comment.Info()   // make sure we have full details
+        let comment = comment.Info()   // make sure we have full details (Comment.About seems to have a race condition)
 
             // ignore my own comments
         if getRole comment.Author <> Role.System
@@ -154,6 +154,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11ngmd2").Info()
+        let post = Reddit.client.SelfPost("t3_11ngt6u").About()
         submitTopLevelComment post
         monitorReplies post
