@@ -40,7 +40,7 @@ module Chat =
     let private prompt =
         Role.createMessage
             Role.System
-            "Reply in the style of a kind Reddit user"
+            "Reply in the style of a typical Reddit user"
 
     /// Gets a reponse to the given message history.
     let chat history =

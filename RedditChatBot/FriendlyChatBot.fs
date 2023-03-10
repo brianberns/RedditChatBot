@@ -22,6 +22,18 @@ module FriendlyChatBot =
         assert(isNonEmpty text)
         $"{author} says {text}"
 
+    let private hr = "---"
+
+    let private addFooter body =
+        $"{body}\n\n{hr}\n\n^(I am a bot based on ChatGPT. This comment was generated automatically.)"
+
+    let private removeFooter (content : string) =
+        let idx = content.LastIndexOf(hr)
+        if idx >= 0 then
+            content.Substring(0, idx).TrimEnd()
+        else
+            content
+
     let private getPostHistory (post : SelfPost) =
         [
             Role.User, say post.Author post.Title
@@ -39,7 +51,7 @@ module FriendlyChatBot =
                 let content =
                     match role with
                         | Role.User -> say comment.Author comment.Body
-                        | _ -> comment.Body
+                        | _ -> removeFooter comment.Body
                 yield role, content
 
                     // ancestors
@@ -113,7 +125,10 @@ module FriendlyChatBot =
                     let response = Chat.chat history
                     printfn ""
                     printfn $"Bot: {response}"
-                    comment.Reply(response) |> ignore
+                    response
+                        |> addFooter
+                        |> comment.Reply
+                        |> ignore
 
     let private submitTopLevelComment (post : SelfPost) =
         assert (getRole post.Author = Role.User)
@@ -128,7 +143,10 @@ module FriendlyChatBot =
                 |> Chat.chat
         printfn ""
         printfn $"Bot: {response}"
-        post.Reply(response) |> ignore
+        response
+            |> addFooter
+            |> post.Reply
+            |> ignore
 
     let rec private monitorReplies (post : Post) =
 
@@ -154,6 +172,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11ngt6u").About()
+        let post = Reddit.client.SelfPost("t3_11nhasc").About()
         submitTopLevelComment post
         monitorReplies post
