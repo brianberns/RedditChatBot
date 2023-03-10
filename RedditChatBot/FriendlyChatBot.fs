@@ -132,11 +132,11 @@ module FriendlyChatBot =
 
                     // get post as a history
                 let history = getPostHistory post
+
+                    // submit chat response
                 printDivider ()
                 printfn $"Post title: {post.Title}"
                 printfn $"Post text: {post.SelfText}"
-
-                    // submit chat response
                 submitComment post.Reply history
 
     /// Maximum number of nested bot replies in thread.
@@ -162,8 +162,6 @@ module FriendlyChatBot =
                     // get comment history
                 let history = getCommentHistory comment
                 assert(history |> Seq.last |> fst = Role.User)
-                printDivider ()
-                printfn $"User: {history |> Seq.last |> snd}"
 
                     // avoid deeply nested threads
                 let nSystem =
@@ -171,10 +169,9 @@ module FriendlyChatBot =
                         |> Seq.where (fun (role, _) ->
                             role = Role.System)
                         |> Seq.length
-                if nSystem >= maxDepth then
-                    printfn ""
-                    printfn "[Max depth exceeded]"
-                else
+                if nSystem < maxDepth then
+                    printDivider ()
+                    printfn $"User: {history |> Seq.last |> snd}"
                     submitComment comment.Reply history
 
     /// Maximum number of replies to a comment that the bot will
@@ -207,6 +204,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11nh2ea")
+        let post = Reddit.client.SelfPost("t3_11nv492")
         submitTopLevelComment post
         monitorReplies ()

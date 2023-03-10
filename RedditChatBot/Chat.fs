@@ -63,4 +63,4 @@ module Chat =
             let choice = Seq.exactlyOne resp.Choices
             choice.Message.Content.Trim()   // some responses start with whitespace - why?
         else
-            failwith resp.Error.Message
+            failwith $"{resp.Error}"
