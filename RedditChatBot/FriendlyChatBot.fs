@@ -25,7 +25,7 @@ module FriendlyChatBot =
     let private hr = "---"
 
     let private addFooter body =
-        $"{body}\n\n{hr}\n\n^(I am a bot based on ChatGPT. This comment was generated automatically.)"
+        $"{body}\n\n{hr}\n\n^(The comment above was generated automatically. Really! I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot).)"
 
     let private removeFooter (content : string) =
         let idx = content.LastIndexOf(hr)
