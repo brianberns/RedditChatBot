@@ -23,12 +23,12 @@ module Footer =
 
 module FriendlyChatBot =
 
-    /// My user account.
-    let me = Reddit.client.User("friendly-chat-bot")
+    /// Bot's user account.
+    let bot = Reddit.client.User("friendly-chat-bot")
 
     /// Gets the role of the given author.
     let private getRole author =
-        if author = me.Name then Role.System
+        if author = bot.Name then Role.System
         else Role.User
 
     /// Does the given text contain any content?
@@ -106,6 +106,19 @@ module FriendlyChatBot =
             |> submit
             |> ignore
 
+    /// Submits a top-level comment on the given post.
+    let private submitTopLevelComment (post : SelfPost) =
+
+            // don't comment on my own posts
+        if getRole post.Author = Role.User then
+
+            printDivider ()
+            printfn $"Post title: {post.Title}"
+            printfn $"Post text: {post.SelfText}"
+
+                // submit chat response
+            submitComment post.Reply (getPostHistory post)
+
     /// Maximum number of nested bot replies in thread.
     let private maxDepth = 3
 
@@ -114,11 +127,11 @@ module FriendlyChatBot =
 
         let comment = comment.Info()   // make sure we have full details (Comment.About seems to have a race condition)
 
-            // ignore my own comments
+            // ignore bot's own comments
         if getRole comment.Author <> Role.System
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
-                // have I already replied to this comment?
+                // has bot already replied to this comment?
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
@@ -145,23 +158,10 @@ module FriendlyChatBot =
                 else
                     submitComment comment.Reply history
 
-    /// Submits a top-level comment on the given post.
-    let private submitTopLevelComment (post : SelfPost) =
-
-            // don't comment on my own posts
-        if getRole post.Author = Role.User then
-
-            printDivider ()
-            printfn $"Post title: {post.Title}"
-            printfn $"Post text: {post.SelfText}"
-
-                // submit chat response
-            submitComment post.Reply (getPostHistory post)
-
     let rec private monitorReplies (post : Post) =
 
         try
-            let myCommentHistory = me.GetCommentHistory()
+            let myCommentHistory = bot.GetCommentHistory()
             for myComment in myCommentHistory do
                 if myComment.Created >= post.Created then
                     let myComment = myComment.Info()   // make sure we have full details
