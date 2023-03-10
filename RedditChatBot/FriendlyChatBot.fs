@@ -50,14 +50,16 @@ module FriendlyChatBot =
                     | "t1_" ->
                         let parent =
                             Reddit.client
-                                .Comment(parentFullname).
-                                About()
+                                .Comment(parentFullname)
+                                .Info()
                         yield! loop parent
 
                         // post
                     | "t3_" ->
                         let post =
-                            Reddit.client.SelfPost(parentFullname)
+                            Reddit.client
+                                .SelfPost(parentFullname)
+                                .Info()
                         yield! getPostHistory post
 
                         // other
@@ -76,7 +78,7 @@ module FriendlyChatBot =
     /// Replies to the given comment, if necessary.
     let private reply (comment : Comment) =
 
-        let comment = comment.About()   // make sure we have full details
+        let comment = comment.Info()   // make sure we have full details
 
             // ignore my own comments
         if getRole comment.Author <> Role.System
@@ -131,17 +133,17 @@ module FriendlyChatBot =
     let rec private monitorReplies (post : Post) =
 
         try
-            let commentHistory = me.GetCommentHistory()
-            for myComment in commentHistory do
+            let myCommentHistory = me.GetCommentHistory()
+            for myComment in myCommentHistory do
                 if myComment.Created >= post.Created then
-                    let myComment = myComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
+                    let myComment = myComment.Info()   // make sure we have full details
                     if myComment.Root.Id = post.Id then
-                        let comments =
+                        let userComments =
                             myComment.Replies
                                 |> Seq.sortBy (fun reply -> reply.Created)
                                 |> Seq.truncate 3
-                        for comment in comments do
-                            reply comment
+                        for userComment in userComments do
+                            reply userComment
 
         with exn ->
             printDivider ()
@@ -152,9 +154,6 @@ module FriendlyChatBot =
 
     /// Runs the bot.
     let run () =
-        let post =
-            me.GetPostHistory("submitted", sort="new", limit=1)
-                |> Seq.cast<SelfPost>
-                |> Seq.exactlyOne
+        let post = Reddit.client.SelfPost("t3_11ngmd2").Info()
         submitTopLevelComment post
         monitorReplies post
