@@ -5,39 +5,48 @@ open System.Threading
 
 open Reddit.Controllers
 
-module FriendlyChatBot =
+module Footer =
 
-    /// My user account.
-    let me = Reddit.client.User("friendly-chat-bot")
-
-    let private getRole author =
-        if author = me.Name then Role.System
-        else Role.User
-
-    let isNonEmpty =
-        String.IsNullOrWhiteSpace >> not
-
-    let private say author text =
-        assert(isNonEmpty author)
-        assert(isNonEmpty text)
-        $"{author} says {text}"
-
+    /// Horizontal rule markdown.
     let private hr = "---"
 
-    let private addFooter body =
-        $"{body}\n\n{hr}\n\n^(The comment above was generated automatically. Really! I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot).)"
+    /// Adds a footer to the given body of text.
+    let add body =
+        $"{body}\n\n{hr}\n\n^(The comment above was generated automatically. I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/).)"
 
-    let private removeFooter (content : string) =
+    /// Removes the footer from the given body of text.
+    let remove (content : string) =
         let idx = content.LastIndexOf(hr)
         if idx >= 0 then
             content.Substring(0, idx).TrimEnd()
         else
             content
 
+module FriendlyChatBot =
+
+    /// My user account.
+    let me = Reddit.client.User("friendly-chat-bot")
+
+    /// Gets the role of the given author.
+    let private getRole author =
+        if author = me.Name then Role.System
+        else Role.User
+
+    /// Does the given text contain any content?
+    let private hasContent =
+        String.IsNullOrWhiteSpace >> not
+
+    /// Says the given text as the given author.
+    let private say author text =
+        assert(hasContent author)
+        assert(hasContent text)
+        $"{author} says {text}"
+
+    /// Converts the given post's content into a history.
     let private getPostHistory (post : SelfPost) =
         [
             Role.User, say post.Author post.Title
-            if isNonEmpty post.SelfText then
+            if hasContent post.SelfText then
                 Role.User, say post.Author post.SelfText
         ]
 
@@ -51,31 +60,28 @@ module FriendlyChatBot =
                 let content =
                     match role with
                         | Role.User -> say comment.Author comment.Body
-                        | _ -> removeFooter comment.Body
+                        | _ -> Footer.remove comment.Body
                 yield role, content
 
                     // ancestors
-                let parentFullname = comment.ParentFullname
-                match parentFullname.Substring(0, 3) with
+                match Thing.getType comment.ParentFullname with
 
-                        // comment
-                    | "t1_" ->
+                    | ThingType.Comment ->
                         let parent =
                             Reddit.client
-                                .Comment(parentFullname)
+                                .Comment(comment.ParentFullname)
                                 .Info()
                         yield! loop parent
 
-                        // post
-                    | "t3_" ->
+                    | ThingType.Post ->
                         let post =
                             Reddit.client
-                                .SelfPost(parentFullname)
+                                .SelfPost(comment.ParentFullname)
                                 .About()
                         yield! getPostHistory post
 
-                        // other
-                    | prefix -> failwith $"Unexpected type: {prefix}"
+                    | ThingType.Other ->
+                        failwith $"Unexpected type: {comment.ParentFullname}"
             ]
 
         loop comment
@@ -126,7 +132,7 @@ module FriendlyChatBot =
                     printfn ""
                     printfn $"Bot: {response}"
                     response
-                        |> addFooter
+                        |> Footer.add
                         |> comment.Reply
                         |> ignore
 
@@ -144,7 +150,7 @@ module FriendlyChatBot =
         printfn ""
         printfn $"Bot: {response}"
         response
-            |> addFooter
+            |> Footer.add
             |> post.Reply
             |> ignore
 
