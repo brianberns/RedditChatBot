@@ -10,17 +10,16 @@ module Footer =
     /// Horizontal rule markdown.
     let private hr = "---"
 
-    /// Adds a footer to the given body of text.
-    let add body =
-        $"{body}\n\n{hr}\n\n^(The comment above was generated automatically. I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/).)"
+    /// Adds a footer to the given text.
+    let add text =
+        $"{text}\n\n{hr}\n\n^(The comment above was generated automatically. I am a bot based on [ChatGPT](https://openai.com/blog/chatgpt). You can find more information about me [here](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/).)"
 
-    /// Removes the footer from the given body of text.
-    let remove (content : string) =
-        let idx = content.LastIndexOf(hr)
+    /// Removes the footer (if any) from the given text.
+    let remove (text : string) =
+        let idx = text.LastIndexOf(hr)
         if idx >= 0 then
-            content.Substring(0, idx).TrimEnd()
-        else
-            content
+            text.Substring(0, idx).TrimEnd()
+        else text
 
 module FriendlyChatBot =
 
@@ -93,8 +92,25 @@ module FriendlyChatBot =
         printfn "----------------------------------------"
         printfn ""
 
+    /// Submits a response comment to the given history.
+    let private submitComment submit history =
+
+            // get chat response
+        let response = Chat.chat history
+        printfn ""
+        printfn $"Bot: {response}"
+
+            // submit comment
+        response
+            |> Footer.add
+            |> submit
+            |> ignore
+
+    /// Maximum number of nested bot replies in thread.
+    let private maxDepth = 3
+
     /// Replies to the given comment, if necessary.
-    let private reply (comment : Comment) =
+    let private submitReply (comment : Comment) =
 
         let comment = comment.Info()   // make sure we have full details (Comment.About seems to have a race condition)
 
@@ -108,7 +124,7 @@ module FriendlyChatBot =
                     |> Seq.exists (fun child ->
                         getRole child.Author = Role.System)
 
-                // if not, create a reply
+                // if not, begin to create a reply
             if not handled then
 
                     // get comment history
@@ -123,36 +139,24 @@ module FriendlyChatBot =
                         |> Seq.where (fun (role, _) ->
                             role = Role.System)
                         |> Seq.length
-                if nSystem >= 3 then
+                if nSystem >= maxDepth then
                     printfn ""
-                    printfn "Bot: [Max depth exceeded]"
+                    printfn "[Max depth exceeded]"
                 else
-                        // get chat response
-                    let response = Chat.chat history
-                    printfn ""
-                    printfn $"Bot: {response}"
-                    response
-                        |> Footer.add
-                        |> comment.Reply
-                        |> ignore
+                    submitComment comment.Reply history
 
+    /// Submits a top-level comment on the given post.
     let private submitTopLevelComment (post : SelfPost) =
-        assert (getRole post.Author = Role.User)
 
-        printDivider ()
-        printfn $"Post title: {post.Title}"
-        printfn $"Post text: {post.SelfText}"
+            // don't comment on my own posts
+        if getRole post.Author = Role.User then
 
-            // comment on post
-        let response =
-            getPostHistory post
-                |> Chat.chat
-        printfn ""
-        printfn $"Bot: {response}"
-        response
-            |> Footer.add
-            |> post.Reply
-            |> ignore
+            printDivider ()
+            printfn $"Post title: {post.Title}"
+            printfn $"Post text: {post.SelfText}"
+
+                // submit chat response
+            submitComment post.Reply (getPostHistory post)
 
     let rec private monitorReplies (post : Post) =
 
@@ -167,7 +171,7 @@ module FriendlyChatBot =
                                 |> Seq.sortBy (fun reply -> reply.Created)
                                 |> Seq.truncate 3
                         for userComment in userComments do
-                            reply userComment
+                            submitReply userComment
 
         with exn ->
             printDivider ()
