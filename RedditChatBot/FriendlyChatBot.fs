@@ -5,95 +5,44 @@ open System.Threading
 
 open Reddit.Controllers
 
-module Footer =
-
-    /// Horizontal rule markdown.
-    let private hr = "---"
-
-    /// Footer text.
-    let private footer =
-
-            // this markdown works in both old and new Reddit
-        "^The ^comment ^above ^was ^generated ^automatically. ^I ^am ^a ^bot ^based ^on [^(ChatGPT)](https://openai.com/blog/chatgpt)^. ^You ^can ^find ^more ^information ^about ^me [^(here)](https://www.reddit.com/user/friendly-chat-bot/comments/11nhqsj/about_me/)^."
-
-    /// Adds a footer to the given text.
-    let add text =
-        $"{text}\n\n{hr}\n\n{footer}"
-
-    /// Removes the footer (if any) from the given text.
-    let remove (text : string) =
-        let idx = text.LastIndexOf(hr)
-        if idx >= 0 then
-            text.Substring(0, idx).TrimEnd()
-        else text
-
 module FriendlyChatBot =
 
     (*
      * The Reddit.NET API presents a very leaky abstraction. As a
      * general rule, we call Post.About() and Comment.Info()
      * defensively to make sure we have the full details of a thing.
-     * Unfortunately, Comment.About() seems to have a race condition.
+     * (Unfortunately, Comment.About() seems to have a race condition.)
      *)
 
     /// Bot's user account.
     let bot = Reddit.client.User("friendly-chat-bot")
 
-    /// Gets the role of the given author.
-    let private getRole author =
-        if author = bot.Name then Role.System
+    /// Determines the role of the given comment's author.
+    let private getRole (comment : Comment) =
+        if comment.Author = bot.Name then Role.System
         else Role.User
 
-    /// Does the given text contain any content?
-    let private hasContent =
-        String.IsNullOrWhiteSpace >> not
-
-    /// Says the given text as the given author.
-    let private say author text =
-        assert(hasContent author)
-        assert(hasContent text)
-        $"{author} says {text}"
-
-    /// Converts the given post's content into a history.
-    let private getPostHistory (post : SelfPost) =
-        let post = post.About()
-        [
-            Role.User, say post.Author post.Title
-            if hasContent post.SelfText then
-                Role.User, say post.Author post.SelfText
-        ]
-
     /// Gets ancestor comments in chronological order.
-    let private getCommentHistory comment =
+    let private getHistory comment =
 
         let rec loop (comment : Comment) =   // to-do: use fewer round-trips
             let comment = comment.Info()
             [
                     // this comment
-                let role = getRole comment.Author
+                let role = getRole comment
                 let content =
                     match role with
-                        | Role.User -> say comment.Author comment.Body
-                        | _ -> Footer.remove comment.Body
+                        | Role.User -> $"{comment.Author} says {comment.Body}"
+                        | _ -> comment.Body
                 yield role, content
 
                     // ancestors
-                match Thing.getType comment.ParentFullname with
-
-                    | ThingType.Comment ->
-                        let parent =
-                            Reddit.client
-                                .Comment(comment.ParentFullname)
-                        yield! loop parent
-
-                    | ThingType.Post ->
-                        let post =
-                            Reddit.client
-                                .SelfPost(comment.ParentFullname)
-                        yield! getPostHistory post
-
-                    | ThingType.Other ->
-                        failwith $"Unexpected type: {comment.ParentFullname}"
+                let thingType = Thing.getType comment.ParentFullname
+                if thingType = ThingType.Comment then
+                    let parent =
+                        Reddit.client
+                            .Comment(comment.ParentFullname)
+                    yield! loop parent
             ]
 
         loop comment
@@ -105,47 +54,6 @@ module FriendlyChatBot =
         printfn "----------------------------------------"
         printfn ""
 
-    /// Submits a response comment to the given history.
-    let private submitComment submit history =
-
-            // get chat response
-        let response = Chat.chat history
-        printfn ""
-        printfn $"Bot: {response}"
-
-            // submit comment
-        response
-            |> Footer.add
-            |> submit
-            |> ignore
-
-    /// Submits a top-level comment on the given post, if necessary.
-    let private submitTopLevelComment (post : SelfPost) =
-
-        let post = post.About()
-
-            // don't comment on bot's own posts
-        if getRole post.Author = Role.User then
-
-                // has bot already replied to this comment?
-            let handled =
-                post.Comments.GetNew()   // to-do: what if the bot commented a long time ago?
-                    |> Seq.exists (fun child ->
-                        getRole child.Author = Role.System)
-
-                // if not, begin to create a reply
-            if not handled then
-
-                    // get post as a history
-                let history = getPostHistory post
-
-                    // submit chat response
-                printDivider ()
-                printfn "New post"
-                for (_, content) in history do
-                    printfn $"User: {content}"
-                submitComment post.Reply history
-
     /// Maximum number of nested bot replies in thread.
     let private maxDepth = 3
 
@@ -154,20 +62,20 @@ module FriendlyChatBot =
         let comment = comment.Info()
 
             // ignore bot's own comments
-        if getRole comment.Author <> Role.System
+        if getRole comment <> Role.System
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
                 // has bot already replied to this comment?
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
-                        getRole child.Author = Role.System)
+                        getRole child = Role.System)
 
                 // if not, begin to create a reply
             if not handled then
 
                     // get comment history
-                let history = getCommentHistory comment
+                let history = getHistory comment
                 assert(history |> Seq.last |> fst = Role.User)
 
                     // avoid deeply nested threads
@@ -177,40 +85,52 @@ module FriendlyChatBot =
                             role = Role.System)
                         |> Seq.length
                 if nSystem < maxDepth then
+
+                        // reply with chat response
+                    let response = Chat.chat history
+                    comment.Reply(response) |> ignore
+
+                        // log interaction
                     printDivider ()
                     printfn $"User: {history |> Seq.last |> snd}"
-                    submitComment comment.Reply history
+                    printfn ""
+                    printfn $"Bot: {response}"
 
-    /// Maximum number of replies to a comment that the bot will
-    /// respond to.
-    let private maxWidth = 3
-
-    /// Monitor replies to the bot's comments.
-    let rec private monitorReplies () =
+    /// Runs a chat session in the given post.
+    let rec private runPost (post : Post) =
         try
-                // scan bot's recent comments
-            for botComment in bot.GetCommentHistory() do
-                let botComment = botComment.Info()
+                // reply to any top-level comments in the post
+            for userComment in post.Comments.GetNew() do
+                submitReply userComment
 
-                    // find oldest user replies to bot's comment
-                let userComments =
-                    botComment.Replies
-                        |> Seq.sortBy (fun reply -> reply.Created)
-                        |> Seq.truncate maxWidth
-
-                    // reply to each user comment
-                for userComment in userComments do
-                    submitReply userComment
+                // reply to replies to bot's recent comments on this post
+            let botCommentHistory =
+                bot.GetCommentHistory(
+                    context = 0,
+                    sort = "new")
+            for botComment in botCommentHistory do
+                if botComment.Created >= post.Created then
+                    let botComment = botComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
+                    if botComment.Root.Id = post.Id then
+                        for userComment in botComment.Replies do
+                            submitReply userComment
 
         with exn ->
             printDivider ()
             printfn $"{exn}"
             Thread.Sleep(10000)   // wait, then continue
 
-        monitorReplies ()
+        runPost post   // loop for now
 
     /// Runs the bot.
     let run () =
-        let post = Reddit.client.SelfPost("t3_11nxtpt")
-        submitTopLevelComment post
-        monitorReplies ()
+
+           // get bot's latest post
+        let post =
+            bot.GetPostHistory()   // sort manually to be sure
+                |> Seq.sortByDescending (fun pst -> pst.Created)
+                |> Seq.head
+        printfn $"{post.Title}"
+
+            // run session in the post
+        runPost post
