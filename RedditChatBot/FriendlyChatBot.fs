@@ -98,17 +98,23 @@ module FriendlyChatBot =
     let rec private runPost (post : Post) =
         try
                 // reply to any top-level comments in the post
-            for userComment in post.Comments.GetNew() do
+            let userComments = post.Comments.GetNew()
+            printDivider ()
+            printfn $"Replying to {userComments.Count} top-level comment(s)"
+            for userComment in userComments do
                 submitReply userComment
 
                 // reply to replies to bot's recent comments on this post
             let botCommentHistory =
                 bot.GetCommentHistory(
                     context = 0,
+                    limit = 100,
                     sort = "new")
+            printDivider ()
+            printfn $"Checking bot's last {botCommentHistory.Count} comment(s)"
             for botComment in botCommentHistory do
                 if botComment.Created >= post.Created then
-                    let botComment = botComment.Info()   // make sure we have full details (would prefer to call About instead, but it has a race condition)
+                    let botComment = botComment.Info()
                     if botComment.Root.Id = post.Id then
                         for userComment in botComment.Replies do
                             submitReply userComment
@@ -125,7 +131,7 @@ module FriendlyChatBot =
 
            // get bot's latest post
         let post =
-            bot.GetPostHistory()   // sort manually to be sure
+            bot.GetPostHistory()   // must sort manually
                 |> Seq.sortByDescending (fun pst -> pst.Created)
                 |> Seq.head
         printfn $"{post.Title}"
