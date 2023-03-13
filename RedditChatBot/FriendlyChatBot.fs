@@ -116,8 +116,6 @@ module FriendlyChatBot =
         try
                 // reply to any top-level comments in the post
             let userComments = post.Comments.GetNew()
-            printDivider ()
-            printfn $"Checking {userComments.Count} top-level comment(s)"
             for userComment in userComments do
                 submitReply userComment
 
@@ -127,8 +125,6 @@ module FriendlyChatBot =
                     context = 0,
                     limit = 100,
                     sort = "new")
-            printDivider ()
-            printfn $"Checking bot's last {botCommentHistory.Count} comment(s)"
             for botComment in botCommentHistory do
                 if botComment.Created >= post.Created then
                     let botComment = botComment.Info()
@@ -152,6 +148,7 @@ module FriendlyChatBot =
                 |> Seq.sortByDescending (fun pst -> pst.Created)
                 |> Seq.head
         printfn $"{post.Title}"
+        printfn $"{post.Created}"
 
             // run session in the post
         runPost post
