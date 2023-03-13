@@ -56,7 +56,7 @@ module FriendlyChatBot =
 
     /// Minimum time between comments, to avoid Reddit's spam filter.
     let private commentDelay =
-        TimeSpan(hours = 0, minutes = 5, seconds = 10)
+        TimeSpan(hours = 0, minutes = 5, seconds = 1)
 
     /// Prints a divider to the screen.
     let private printDivider () =
@@ -93,11 +93,13 @@ module FriendlyChatBot =
                         |> Seq.length
                 if nSystem < maxDepth then
 
-                        // reply with chat response
+                        // sleep if necessary to avoid spam filter
                     let sleep = dtLastComment + commentDelay - DateTime.Now
                     if sleep > TimeSpan.Zero then
                         printfn $"Sleeping for {sleep}"
                         Thread.Sleep(sleep)
+
+                        // reply with chat response
                     let response = Chat.chat history
                     comment.Reply(response) |> ignore
                     dtLastComment <- DateTime.Now
