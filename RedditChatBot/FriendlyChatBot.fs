@@ -1,6 +1,8 @@
 ﻿namespace RedditChatBot
 
+open System
 open System.Threading
+
 open Reddit.Controllers
 
 module FriendlyChatBot =
@@ -46,14 +48,21 @@ module FriendlyChatBot =
         loop comment
             |> List.rev
 
+    /// Maximum number of nested bot replies in thread.
+    let private maxDepth = 3
+
+    /// Timestamp of last bot comment.
+    let mutable private dtLastComment = DateTime.Now
+
+    /// Minimum time between comments, to avoid Reddit's spam filter.
+    let private commentDelay =
+        TimeSpan(hours = 0, minutes = 5, seconds = 10)
+
     /// Prints a divider to the screen.
     let private printDivider () =
         printfn ""
         printfn "----------------------------------------"
         printfn ""
-
-    /// Maximum number of nested bot replies in thread.
-    let private maxDepth = 3
 
     /// Replies to the given comment, if necessary.
     let private submitReply (comment : Comment) =
@@ -85,8 +94,13 @@ module FriendlyChatBot =
                 if nSystem < maxDepth then
 
                         // reply with chat response
+                    let sleep = dtLastComment + commentDelay - DateTime.Now
+                    if sleep > TimeSpan.Zero then
+                        printfn $"Sleeping for {sleep}"
+                        Thread.Sleep(sleep)
                     let response = Chat.chat history
                     comment.Reply(response) |> ignore
+                    dtLastComment <- DateTime.Now
 
                         // log interaction
                     printDivider ()
