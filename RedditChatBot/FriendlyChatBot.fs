@@ -96,6 +96,7 @@ module FriendlyChatBot =
                         // sleep if necessary to avoid spam filter
                     let sleep = dtLastComment + commentDelay - DateTime.Now
                     if sleep > TimeSpan.Zero then
+                        printDivider ()
                         printfn $"Sleeping for {sleep}"
                         Thread.Sleep(sleep)
 
