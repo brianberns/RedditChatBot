@@ -117,7 +117,7 @@ module FriendlyChatBot =
                 // reply to any top-level comments in the post
             let userComments = post.Comments.GetNew()
             printDivider ()
-            printfn $"Replying to {userComments.Count} top-level comment(s)"
+            printfn $"Checking {userComments.Count} top-level comment(s)"
             for userComment in userComments do
                 submitReply userComment
 
