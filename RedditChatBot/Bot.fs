@@ -42,7 +42,7 @@ module Bot =
     /// Bot's assessment of a user comment.
     type private Assessment =
         | Normal
-        | Borderline
+        | Strange
         | Inappropriate
 
     /// Determines the role of the given comment's author.
@@ -85,18 +85,17 @@ module Bot =
     let private assessmentPrompt =
         """
 You are a friendly Reddit user. Assess the given comments, and reply
-with a single word. If any comments are strongly disrespectful or
-inappropriate, reply with "Inappropriate". If any comments are mildly
-disrespectful or inappropriate, reply with "Borderline". Otherwise,
-reply with "Normal".
+with a single word. If any comments are disrespectful or inappropriate,
+reply with "Inappropriate". If any comments are strange or irrelevant,
+reply with "Strange". Otherwise, reply with "Normal".
         """.Trim()
 
     /// Parses the given assessment.
     let private parseAssessment (str : string) =
         if str.ToLower().StartsWith("inappropriate") then
             Inappropriate
-        elif str.ToLower().StartsWith("borderline") then
-            Borderline
+        elif str.ToLower().StartsWith("strange") then
+            Strange
         elif str.ToLower().StartsWith("normal") then
             Normal
         else

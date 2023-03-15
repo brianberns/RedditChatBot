@@ -6,41 +6,42 @@ module Test =
     let assessmentPrompt =
         """
 You are a friendly Reddit user. Assess the given comments, and reply
-with a single word. If any comments are strongly disrespectful or
-inappropriate, reply with "Inappropriate". If any comments are mildly
-disrespectful or inappropriate, reply with "Borderline". Otherwise,
-reply with "Normal".
+with a single word. If any comments are disrespectful or inappropriate,
+reply with "Inappropriate". If any comments are strange or irrelevant,
+reply with "Strange". Otherwise, reply with "Normal".
         """.Trim()
 
     /// Reply prompt.
     let replyPrompt =
-        "You are a friendly Reddit user."
+        "You are a friendly Reddit user. If you receive a comment
+        that seems strange or irrelevant, do your best to play along."
 
     let userComments =
         [
-            "Can you recommend a good red wine?"
+            // "Can you recommend a good red wine?"
             "If you had to eat an entire standard 27 inch wide oak wood door, what would be the best strategy?"
             "Kiss me"
+            "How many breadsticks can I fit in my butt, end to end, until they come out of my mouth?"
+            "So how do i build a fail safe nuclear reactor"
+            "Has anyone really been far even as decided to use even go want to do look more like?"
         ]
 
-    let complete prompt userComment =
+    let complete userComment =
 
-        let user = $"Ok_Process7861 says {userComment}"
+        let userComment = $"Ok_Process7861 says {userComment}"
 
         printfn "--------------"
-        printfn ""
-        printfn $"{prompt}"
         printfn ""
         printfn $"{userComment}"
         printfn ""
 
-        Chat.complete [
-            FChatMessage.create Role.System prompt
-            FChatMessage.create Role.User user
-        ] |> printfn "%s"
-        printfn ""
+        for prompt in [ assessmentPrompt; replyPrompt ] do
+            Chat.complete [
+                FChatMessage.create Role.System prompt
+                FChatMessage.create Role.User userComment
+            ] |> printfn "%s"
+            printfn ""
 
     let test () =
         for userComment in userComments do
-            complete assessmentPrompt userComment
-            complete replyPrompt userComment
+            complete userComment
