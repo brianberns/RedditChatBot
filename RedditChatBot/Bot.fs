@@ -91,7 +91,7 @@ module Bot =
     let private assessmentPrompt =
         """
 Assess the given Reddit comments as a typical Reddit user. Reply
-with a single word. If any of the comments inappropriate or 
+with a single word. If any of the comments are inappropriate or 
 disrespectful, reply with "Inappropriate". Otherwise, reply with
 "Normal".
         """.Trim()
@@ -105,7 +105,7 @@ disrespectful, reply with "Inappropriate". Otherwise, reply with
 
     /// Reply prompt.
     let private replyPrompt =
-        "Reply in the style of a typical Reddit user."
+        "Reply as a friendly, open-minded Reddit user."
 
     /// Completes the given history using the given system-level
     /// prompt.
