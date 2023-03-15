@@ -39,16 +39,16 @@ module Bot =
             LastCommentTime = DateTime.Now
         }
 
+    /// Bot's assessment of a user comment.
     type private Assessment =
         | Normal
         | Inappropriate
-        | Strange
 
     module private Assessment =
 
+        /// Parses the given assessment string.
         let parse = function
             | "Inappropriate" -> Inappropriate
-            | "Strange" -> Strange
             | _ -> Normal
 
     /// Determines the role of the given comment's author.
@@ -87,36 +87,34 @@ module Bot =
         loop comment
             |> List.rev
 
-    /// System-level prompt.
-    let private systemPrompt =
+    /// Assessment prompt.
+    let private assessmentPrompt =
         """
-Reply in the style of an enthusiastic, friendly Reddit user. At the end
-of your reply include a keyword in square brackets that describes your
-assessment of the last message in your input. Keyword "Normal" indicates
-a normal message. Keyword "Inappropriate" indicates an inappropriate or
-disrespectful message. Keyword "Strange" indicates a strange, nonsensical,
-or irrelevant message.
+Assess the given Reddit comments as a typical Reddit user. Reply
+with a single word. If any of the comments inappropriate or 
+disrespectful, reply with "Inappropriate". Otherwise, reply with
+"Normal".
         """.Trim()
 
-    /// Parses the given completion.
-    let private parseCompletion (completion : string) =
-        let iStart = completion.LastIndexOf('[')
-        let iEnd = completion.LastIndexOf(']')
-        if iStart >= 0 && iEnd >= 0 && iEnd > iStart then
-            let content =
-                completion
-                    .Substring(0, iStart)
-                    .Trim()
-            let assessment =
-                completion
-                    .Substring(
-                        iStart + 1,
-                        iEnd - iStart - 1)
-                    .Trim()
-                    |> Assessment.parse
-            content, assessment
+    /// Parses the given assessment.
+    let private parseAssessment (str : string) =
+        if str.ToLower().StartsWith("inappropriate") then
+            Inappropriate
         else
-            completion, Normal
+            Normal
+
+    /// Reply prompt.
+    let private replyPrompt =
+        "Reply in the style of a typical Reddit user."
+
+    /// Completes the given history using the given system-level
+    /// prompt.
+    let private complete prompt (history : ChatHistory) =
+        Chat.complete [
+            yield FChatMessage.create
+                Role.System prompt
+            yield! history
+        ]
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
@@ -157,22 +155,20 @@ or irrelevant message.
                         |> Seq.length
                 if nBot < bot.MaxDepth then
 
+                        // assess input
+                    let assessment =
+                        complete assessmentPrompt history
+                            |> parseAssessment
+
                         // obtain chat completion
-                    let content, assessment =
-                        let completion =
-                            Chat.complete [
-                                yield FChatMessage.create
-                                    Role.System systemPrompt
-                                yield! history
-                            ]
-                        parseCompletion completion
+                    let completion =
+                        if assessment = Normal then
+                            complete replyPrompt history
+                        else "No comment."
                     
                         // submit reply
-                    let body =
-                        if assessment = Normal then content
-                        else "No comment."
                     delay bot
-                    comment.Reply(body) |> ignore
+                    comment.Reply(completion) |> ignore
                     { bot with LastCommentTime = DateTime.Now }
 
                 else bot

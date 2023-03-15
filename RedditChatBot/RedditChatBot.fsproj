@@ -13,6 +13,7 @@
     <Compile Include="Reddit.fs" />
     <Compile Include="Chat.fs" />
     <Compile Include="Bot.fs" />
+    <Compile Include="Test.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
