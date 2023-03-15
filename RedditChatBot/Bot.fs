@@ -162,9 +162,10 @@ reply with "Normal".
 
                         // obtain chat completion
                     let completion =
-                        if assessment = Normal then
+                        if assessment = Inappropriate then
+                            "No comment."
+                        else
                             complete replyPrompt history
-                        else "No comment."
                     
                         // submit reply
                     delay bot
