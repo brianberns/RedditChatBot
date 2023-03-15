@@ -92,10 +92,10 @@ module Bot =
         """
 Reply in the style of an enthusiastic, friendly Reddit user. At the end
 of your reply include a keyword in square brackets that describes your
-assessment of the most recent comment you are replying to. Keyword "Normal"
-indicates a normal comment. Keyword "Inappropriate" indicates an inappropriate
-or disrespectful comment. Keyword "Strange" indicates a strange, nonsensical,
-or irrelevant comment.
+assessment of the last message in your input. Keyword "Normal" indicates
+a normal message. Keyword "Inappropriate" indicates an inappropriate or
+disrespectful message. Keyword "Strange" indicates a strange, nonsensical,
+or irrelevant message.
         """.Trim()
 
     /// Parses the given completion.
@@ -216,9 +216,9 @@ or irrelevant comment.
                 // generate replies
             printfn ""
             printfn $"{DateTime.Now}: Found {comments.Length} comments"
-            (bot, comments)
-                ||> List.fold (fun bot comment ->
-                    printfn $"{DateTime.Now}: Comment {comment.Fullname}"
+            (bot, Seq.indexed comments)
+                ||> Seq.fold (fun bot (idx, comment) ->
+                    printfn $"{DateTime.Now}: Comment {idx+1}/{comments.Length}"
                     submitReplySafe comment bot)
                 |> loop
 
