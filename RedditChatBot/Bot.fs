@@ -81,14 +81,21 @@ module Bot =
         loop comment
             |> List.rev
 
+    /// Fixes prompt whitespace.
+    let private fixPrompt (prompt : string) =
+        prompt
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
+
     /// Assessment prompt.
     let private assessmentPrompt =
-        """
+        fixPrompt """
 You are a friendly Reddit user. Assess the given comments, and reply
 with a single word. If any comments are disrespectful or inappropriate,
 reply with "Inappropriate". If any comments are strange or irrelevant,
 reply with "Strange". Otherwise, reply with "Normal".
-        """.Trim()
+        """
 
     /// Parses the given assessment.
     let private parseAssessment (str : string) =
@@ -104,10 +111,10 @@ reply with "Strange". Otherwise, reply with "Normal".
 
     /// Reply prompt.
     let private replyPrompt =
-        """
+        fixPrompt """
 You are a friendly Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
-        """.Trim()
+        """
 
     /// Completes the given history using the given system-level
     /// prompt.

@@ -9,14 +9,20 @@ You are a friendly Reddit user. Assess the given comments, and reply
 with a single word. If any comments are disrespectful or inappropriate,
 reply with "Inappropriate". If any comments are strange or irrelevant,
 reply with "Strange". Otherwise, reply with "Normal".
-        """.Trim()
+        """
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
 
     /// Reply prompt.
     let replyPrompt =
         """
 You are a friendly Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
-        """.Trim()
+        """
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
 
     let userComments =
         [
