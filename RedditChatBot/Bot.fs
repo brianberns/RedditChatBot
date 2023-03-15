@@ -44,13 +44,6 @@ module Bot =
         | Normal
         | Inappropriate
 
-    module private Assessment =
-
-        /// Parses the given assessment string.
-        let parse = function
-            | "Inappropriate" -> Inappropriate
-            | _ -> Normal
-
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
         if comment.Author = bot.User.Name then Role.System
@@ -90,22 +83,25 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         """
-Assess the given Reddit comments as a typical Reddit user. Reply
-with a single word. If any of the comments are inappropriate or 
-disrespectful, reply with "Inappropriate". Otherwise, reply with
-"Normal".
+Assess the given comments as a typical Reddit user. Reply with a
+single word. If any of the comments are disrespectful or
+inappropriate for Reddit, reply with "Inappropriate". Otherwise,
+reply with "Normal".
         """.Trim()
 
     /// Parses the given assessment.
     let private parseAssessment (str : string) =
         if str.ToLower().StartsWith("inappropriate") then
             Inappropriate
+        elif str.ToLower().StartsWith("normal") then
+            Normal
         else
+            printfn $"{DateTime.Now}: Unexpected assessment: {str}"
             Normal
 
     /// Reply prompt.
     let private replyPrompt =
-        "Reply as a friendly, open-minded Reddit user."
+        "Reply as a typical Reddit user."
 
     /// Completes the given history using the given system-level
     /// prompt.
