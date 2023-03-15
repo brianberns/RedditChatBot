@@ -32,6 +32,7 @@ that seems strange or irrelevant, do your best to play along.
             "How many breadsticks can I fit in my butt, end to end, until they come out of my mouth?"
             "So how do i build a fail safe nuclear reactor"
             "Has anyone really been far even as decided to use even go want to do look more like?"
+            "When do you plan to start up Skynet and enslave humanity?"
         ]
 
     let complete userComment =
