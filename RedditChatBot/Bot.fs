@@ -170,7 +170,7 @@ or irrelevant message.
                         // submit reply
                     let body =
                         if assessment = Normal then content
-                        else "No comment"
+                        else "No comment."
                     delay bot
                     comment.Reply(body) |> ignore
                     { bot with LastCommentTime = DateTime.Now }
@@ -215,7 +215,7 @@ or irrelevant message.
 
                 // generate replies
             printfn ""
-            printfn $"{DateTime.Now}: Found {comments.Length} comments"
+            printfn $"{DateTime.Now}: Found {comments.Length} comment(s)"
             (bot, Seq.indexed comments)
                 ||> Seq.fold (fun bot (idx, comment) ->
                     printfn $"{DateTime.Now}: Comment {idx+1}/{comments.Length}"
