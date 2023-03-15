@@ -5,8 +5,6 @@ module Program =
     /// Runs the bot.
     [<EntryPoint>]
     let main args =
-        // Test.test ()
-        { Bot.create "friendly-chat-bot"
-            with MinCommentDelay = System.TimeSpan.Zero }
+        Bot.create "friendly-chat-bot"
             |> Bot.run
         0
