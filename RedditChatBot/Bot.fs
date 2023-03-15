@@ -125,6 +125,12 @@ module Bot =
                     delay bot
 
                         // reply with chat response
+                    let history =
+                        [
+                            yield FChatMessage.create
+                                Role.System "Reply in the style of a typical Reddit user"
+                            yield! history
+                        ]
                     let response = Chat.complete history
                     comment.Reply(response) |> ignore
 
