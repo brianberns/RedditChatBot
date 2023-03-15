@@ -18,13 +18,36 @@ type Role =
     /// ChatGPT response.
     | Assistance
 
-module Role =
+/// F# chat message type.
+type FChatMessage =
+    {
+        /// Role of message originator.
+        Role : Role
 
-    /// Creates chat message depending on role.
-    let createMessage = function
-        | Role.System -> ChatMessage.FromSystem
-        | Role.User -> ChatMessage.FromUser
-        | Role.Assistance -> ChatMessage.FromAssistance
+        /// Message content.
+        Content : string
+    }
+
+module FChatMessage =
+
+    /// Creates a chat message.
+    let create role content =
+        {
+            Role = role
+            Content = content
+        }
+
+    /// Converts a chat message to native format.
+    let toNative msg =
+        let create =
+            match msg.Role with
+                | Role.System -> ChatMessage.FromSystem
+                | Role.User -> ChatMessage.FromUser
+                | Role.Assistance -> ChatMessage.FromAssistance
+        create msg.Content
+
+/// Chonological sequence of chat messages.
+type ChatHistory = seq<FChatMessage>
 
 module Chat =
 
@@ -36,24 +59,17 @@ module Chat =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
 
-    /// Initial prompt.
-    let private prompt =
-        Role.createMessage
-            Role.System
-            "Reply in the style of a typical Reddit user"
-
-    /// Gets a reponse to the given message history.
-    let chat history =
+    /// Gets a response to the given chat history.
+    let complete (history : ChatHistory) =
 
             // build the request
         let req =
+            let msgs =
+                history
+                    |> Seq.map FChatMessage.toNative
+                    |> Seq.toArray
             ChatCompletionCreateRequest(
-                Messages =
-                    ResizeArray [
-                        prompt
-                        for (role, content) in history do
-                            Role.createMessage role content
-                    ],
+                Messages = msgs,
                 Model = Models.ChatGpt3_5Turbo)
 
             // wait for the response (single-threaded, no point in getting fancy)
@@ -63,4 +79,4 @@ module Chat =
             let choice = Seq.exactlyOne resp.Choices
             choice.Message.Content.Trim()   // some responses start with whitespace - why?
         else
-            failwith $"{resp.Error}"
+            failwith $"{resp.Error.Message}"
