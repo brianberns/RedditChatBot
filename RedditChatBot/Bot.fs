@@ -105,8 +105,8 @@ reply with "Strange". Otherwise, reply with "Normal".
     /// Reply prompt.
     let private replyPrompt =
         """
-        You are a friendly Reddit user. If you receive a comment
-        that seems strange or irrelevant, do your best to play along.
+You are a friendly Reddit user. If you receive a comment
+that seems strange or irrelevant, do your best to play along.
         """.Trim()
 
     /// Completes the given history using the given system-level
