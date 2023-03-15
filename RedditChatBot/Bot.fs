@@ -5,12 +5,6 @@ open System.Threading
 
 open Reddit.Controllers
 
-[<AutoOpen>]
-module Prelude =
-
-    /// Flips order of function arguments.
-    let flip f a b = f b a
-
 type Bot =
     {
         /// Bot's user account.
@@ -98,9 +92,9 @@ module Bot =
         """
 Reply in the style of an enthusiastic, friendly Reddit user. At the end
 of your reply include a keyword in square brackets that describes your
-assessment of the comment you are replying to. Keyword "Normal" indicates
-a normal comment. Keyword "Inappropriate" indicates an inappropriate or
-disrespectful comment. Keyword "Strange" indicates a strange, nonsensical,
+assessment of the most recent comment you are replying to. Keyword "Normal"
+indicates a normal comment. Keyword "Inappropriate" indicates an inappropriate
+or disrespectful comment. Keyword "Strange" indicates a strange, nonsensical,
 or irrelevant comment.
         """.Trim()
 
@@ -174,11 +168,12 @@ or irrelevant comment.
                         parseCompletion completion
                     
                         // submit reply
-                    if assessment = Normal then
-                        delay bot
-                        comment.Reply(content) |> ignore
-                        { bot with LastCommentTime = DateTime.Now }
-                    else bot
+                    let body =
+                        if assessment = Normal then content
+                        else "No comment"
+                    delay bot
+                    comment.Reply(body) |> ignore
+                    { bot with LastCommentTime = DateTime.Now }
 
                 else bot
 
@@ -219,8 +214,12 @@ or irrelevant comment.
                 ]
 
                 // generate replies
-            printfn $"{DateTime.Now}: Found {comments.Length} candidate comments"
-            List.fold (flip submitReplySafe) bot comments
+            printfn ""
+            printfn $"{DateTime.Now}: Found {comments.Length} comments"
+            (bot, comments)
+                ||> List.fold (fun bot comment ->
+                    printfn $"{DateTime.Now}: Comment {comment.Fullname}"
+                    submitReplySafe comment bot)
                 |> loop
 
         loop bot |> ignore
