@@ -45,47 +45,31 @@ module Bot =
             LastCommentTime = DateTime.Now
         }
 
+    type private Assessment =
+        | Normal
+        | Inappropriate
+        | Strange
+
+    module private Assessment =
+
+        let parse = function
+            | "Inappropriate" -> Inappropriate
+            | "Strange" -> Strange
+            | _ -> Normal
+
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
         if comment.Author = bot.User.Name then Role.System
         else Role.User
 
-    /// Indicates system-level prompt.
-    let private systemKeyword = "System:"
-
-    /// Converts the given comment to chat messages.
-    let private parseComment comment bot =
+    /// Converts the given comment to a chat message.
+    let private createChatMessage comment bot =
         let role = getRole comment bot
-        [
+        let content =
             match role with
-                | Role.User ->
-
-                        // comment contains system-level prompt?
-                    let prompt, remainder =
-                        if comment.Body.StartsWith(systemKeyword) then
-
-                            let prompt =
-                                comment.Body
-                                    .Substring(systemKeyword.Length)
-                                    .Split('\n')
-                                    |> Array.head
-
-                            let remainder =
-                                comment.Body.Substring(
-                                    systemKeyword.Length + prompt.Length)
-
-                            prompt.Trim(), remainder.Trim()
-                        else
-                            "", comment.Body.Trim()
-
-                    if prompt <> "" then
-                        yield FChatMessage.create Role.System prompt
-                    if remainder <> "" then
-                        yield FChatMessage.create role
-                            $"{comment.Author} says {remainder}"
-                | _ ->
-                    yield FChatMessage.create role comment.Body
-        ]
+                | Role.User -> $"{comment.Author} says {comment.Body}"
+                | _ -> comment.Body
+        FChatMessage.create role content
 
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
@@ -94,7 +78,7 @@ module Bot =
             let comment = comment.Info()
             [
                     // this comment
-                yield! parseComment comment bot
+                yield createChatMessage comment bot
 
                     // ancestors
                 match Thing.getType comment.ParentFullname with
@@ -109,24 +93,36 @@ module Bot =
         loop comment
             |> List.rev
 
-    /// Default prompt if none specified by user.
-    let private defaultPrompt =
-        "Reply in the style of a typical Reddit user"
+    /// System-level prompt.
+    let private systemPrompt =
+        """
+Reply in the style of an enthusiastic, friendly Reddit user. At the end
+of your reply include a keyword in square brackets that describes your
+assessment of the comment you are replying to. Keyword "Normal" indicates
+a normal comment. Keyword "Inappropriate" indicates an inappropriate or
+disrespectful comment. Keyword "Strange" indicates a strange, nonsensical,
+or irrelevant comment.
+        """.Trim()
 
-    /// Ensures that the given history doesn't start with a user-
-    /// level message.
-    let private ensurePrompt (history : ChatHistory) : ChatHistory =
-        let firstRole =
-            history
-                |> List.tryHead
-                |> Option.map (fun msg -> msg.Role)
-                |> Option.defaultValue Role.User
-        [
-            if firstRole = Role.User then
-                yield FChatMessage.create
-                    Role.System defaultPrompt
-            yield! history
-        ]
+    /// Parses the given completion.
+    let private parseCompletion (completion : string) =
+        let iStart = completion.LastIndexOf('[')
+        let iEnd = completion.LastIndexOf(']')
+        if iStart >= 0 && iEnd >= 0 && iEnd > iStart then
+            let content =
+                completion
+                    .Substring(0, iStart)
+                    .Trim()
+            let assessment =
+                completion
+                    .Substring(
+                        iStart + 1,
+                        iEnd - iStart - 1)
+                    .Trim()
+                    |> Assessment.parse
+            content, assessment
+        else
+            completion, Normal
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
@@ -167,16 +163,22 @@ module Bot =
                         |> Seq.length
                 if nBot < bot.MaxDepth then
 
-                        // obtain chat response
-                    let response =
-                        history
-                            |> ensurePrompt
-                            |> Chat.complete
+                        // obtain chat completion
+                    let content, assessment =
+                        let completion =
+                            Chat.complete [
+                                yield FChatMessage.create
+                                    Role.System systemPrompt
+                                yield! history
+                            ]
+                        parseCompletion completion
                     
                         // submit reply
-                    delay bot
-                    comment.Reply(response) |> ignore
-                    { bot with LastCommentTime = DateTime.Now }
+                    if assessment = Normal then
+                        delay bot
+                        comment.Reply(content) |> ignore
+                        { bot with LastCommentTime = DateTime.Now }
+                    else bot
 
                 else bot
 
