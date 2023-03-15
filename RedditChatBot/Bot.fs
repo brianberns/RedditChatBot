@@ -83,9 +83,9 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         """
-Assess the given comments as a typical Reddit user. Reply with a
-single word. If any of the comments are disrespectful or
-inappropriate for Reddit, reply with "Inappropriate". Otherwise,
+You are a friendly, open-minded Reddit user. Assess the given comments,
+and reply with a single word. If any of the comments are disrespectful
+or inappropriate for Reddit, reply with "Inappropriate". Otherwise,
 reply with "Normal".
         """.Trim()
 
@@ -101,7 +101,7 @@ reply with "Normal".
 
     /// Reply prompt.
     let private replyPrompt =
-        "Reply as a typical Reddit user."
+        "You are a friendly, open-minded Reddit user."
 
     /// Completes the given history using the given system-level
     /// prompt.
@@ -178,6 +178,7 @@ reply with "Normal".
         with exn ->
             printfn ""
             printfn $"{exn}"
+            printfn ""
             Thread.Sleep(10000)   // wait for problem to clear up, hopefully
             bot
 
