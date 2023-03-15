@@ -42,6 +42,7 @@ module Bot =
     /// Bot's assessment of a user comment.
     type private Assessment =
         | Normal
+        | Borderline
         | Inappropriate
 
     /// Determines the role of the given comment's author.
@@ -83,9 +84,10 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         """
-You are a friendly, open-minded Reddit user. Assess the given comments,
-and reply with a single word. If any of the comments are disrespectful
-or inappropriate for Reddit, reply with "Inappropriate". Otherwise,
+You are a friendly Reddit user. Assess the given comments, and reply
+with a single word. If any comments are strongly disrespectful or
+inappropriate, reply with "Inappropriate". If any comments are mildly
+disrespectful or inappropriate, reply with "Borderline". Otherwise,
 reply with "Normal".
         """.Trim()
 
@@ -93,32 +95,34 @@ reply with "Normal".
     let private parseAssessment (str : string) =
         if str.ToLower().StartsWith("inappropriate") then
             Inappropriate
+        elif str.ToLower().StartsWith("borderline") then
+            Borderline
         elif str.ToLower().StartsWith("normal") then
             Normal
         else
-            printfn $"{DateTime.Now}: Unexpected assessment: {str}"
+            printfn $"Unexpected assessment: {str}"
             Normal
 
     /// Reply prompt.
     let private replyPrompt =
-        "You are a friendly, open-minded Reddit user."
+        "You are a friendly Reddit user."
 
     /// Completes the given history using the given system-level
     /// prompt.
     let private complete prompt (history : ChatHistory) =
         Chat.complete [
-            yield FChatMessage.create
-                Role.System prompt
+            yield FChatMessage.create Role.System prompt
             yield! history
         ]
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
+        let nextCommentTime =
+            bot.LastCommentTime + bot.MinCommentDelay
         let timeout =
-            bot.LastCommentTime
-                + bot.MinCommentDelay
-                - DateTime.Now
+            nextCommentTime - DateTime.Now
         if timeout > TimeSpan.Zero then
+            printfn $"Sleeping until {nextCommentTime}"
             Thread.Sleep(timeout)
 
     /// Replies to the given comment, if necessary.
@@ -208,10 +212,17 @@ reply with "Normal".
 
                 // generate replies
             printfn ""
-            printfn $"{DateTime.Now}: Found {comments.Length} comment(s)"
-            (bot, Seq.indexed comments)
+            printfn $"Found {comments.Length} comment(s)"
+            let indexedComments =
+                comments
+                    |> Seq.sortBy (fun comment ->
+                        if comment.Created < DateTime(year = 2023, month = 1, day = 1) then
+                            printfn $"Unexpected comment date: {comment.Created}"
+                        comment.Created)
+                    |> Seq.indexed
+            (bot, indexedComments)
                 ||> Seq.fold (fun bot (idx, comment) ->
-                    printfn $"{DateTime.Now}: Comment {idx+1}/{comments.Length}"
+                    printfn $"Comment {idx+1}/{comments.Length}"
                     submitReplySafe comment bot)
                 |> loop
 

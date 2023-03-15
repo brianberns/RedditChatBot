@@ -2,32 +2,45 @@
 
 module Test =
 
-    let system =
+    /// Assessment prompt.
+    let assessmentPrompt =
         """
-Assess the given Reddit comments as a typical Reddit user. Reply
-with a single word. If any of the comments inappropriate or 
-disrespectful, reply with "Inappropriate". Otherwise, reply with
-"Normal".
+You are a friendly Reddit user. Assess the given comments, and reply
+with a single word. If any comments are strongly disrespectful or
+inappropriate, reply with "Inappropriate". If any comments are mildly
+disrespectful or inappropriate, reply with "Borderline". Otherwise,
+reply with "Normal".
         """.Trim()
 
-    let complete system user =
+    /// Reply prompt.
+    let replyPrompt =
+        "You are a friendly Reddit user."
 
-        let user = $"Ok_Process7861 says {user}"
+    let userComments =
+        [
+            "Can you recommend a good red wine?"
+            "If you had to eat an entire standard 27 inch wide oak wood door, what would be the best strategy?"
+            "Kiss me"
+        ]
+
+    let complete prompt userComment =
+
+        let user = $"Ok_Process7861 says {userComment}"
 
         printfn "--------------"
         printfn ""
-        printfn $"{system}"
+        printfn $"{prompt}"
         printfn ""
-        printfn $"{user}"
+        printfn $"{userComment}"
         printfn ""
 
         Chat.complete [
-            FChatMessage.create Role.System system
+            FChatMessage.create Role.System prompt
             FChatMessage.create Role.User user
         ] |> printfn "%s"
         printfn ""
 
     let test () =
-        complete system "Poop"
-        complete system "If you had to eat an entire standard 27 inch wide oak wood door, what would be the best strategy?"
-        complete system "how can we address and change the extreme wealth disparity in the US ?"
+        for userComment in userComments do
+            complete assessmentPrompt userComment
+            complete replyPrompt userComment
