@@ -13,8 +13,10 @@ reply with "Strange". Otherwise, reply with "Normal".
 
     /// Reply prompt.
     let replyPrompt =
-        "You are a friendly Reddit user. If you receive a comment
-        that seems strange or irrelevant, do your best to play along."
+        """
+        You are a friendly Reddit user. If you receive a comment
+        that seems strange or irrelevant, do your best to play along.
+        """.Trim()
 
     let userComments =
         [

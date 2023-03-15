@@ -104,7 +104,10 @@ reply with "Strange". Otherwise, reply with "Normal".
 
     /// Reply prompt.
     let private replyPrompt =
-        "You are a friendly Reddit user."
+        """
+        You are a friendly Reddit user. If you receive a comment
+        that seems strange or irrelevant, do your best to play along.
+        """.Trim()
 
     /// Completes the given history using the given system-level
     /// prompt.
@@ -113,6 +116,25 @@ reply with "Strange". Otherwise, reply with "Normal".
             yield FChatMessage.create Role.System prompt
             yield! history
         ]
+
+    /// Completes the given history positively, using the given
+    /// system-level prompt.
+    let private completePositive prompt history =
+
+        let isNegative (text : string) =
+            let text = text.ToLower()
+            text.Contains("disrespectful")
+                || text.Contains("inappropriate")
+
+        let rec loop n =
+            let completion = complete prompt history
+            if isNegative completion then
+                if n > 0 then loop (n - 1)
+                else "No comment."
+            else
+                completion
+
+        loop 2
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
@@ -162,7 +184,7 @@ reply with "Strange". Otherwise, reply with "Normal".
                         // obtain chat completion
                     let completion =
                         if assessment = Inappropriate then
-                            "No comment."
+                            completePositive replyPrompt history
                         else
                             complete replyPrompt history
                     
