@@ -47,7 +47,7 @@ module FChatMessage =
         create msg.Content
 
 /// Chonological sequence of chat messages.
-type ChatHistory = seq<FChatMessage>
+type ChatHistory = List<FChatMessage>
 
 module Chat =
 

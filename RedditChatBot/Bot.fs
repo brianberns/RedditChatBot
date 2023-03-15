@@ -41,7 +41,7 @@ module Bot =
             User = Reddit.client.User(name : string)
             MaxDepth = 3
             MinCommentDelay =
-                TimeSpan(hours = 0, minutes = 5, seconds = 1)
+                TimeSpan(hours = 0, minutes = 5, seconds = 5)
             LastCommentTime = DateTime.Now
         }
 
@@ -50,14 +50,42 @@ module Bot =
         if comment.Author = bot.User.Name then Role.System
         else Role.User
 
-    /// Converts the given comment to a chat message.
-    let private createChatMessage comment bot =
+    /// Indicates system-level prompt.
+    let private systemKeyword = "System:"
+
+    /// Converts the given comment to chat messages.
+    let private parseComment comment bot =
         let role = getRole comment bot
-        let content =
+        [
             match role with
-                | Role.User -> $"{comment.Author} says {comment.Body}"
-                | _ -> comment.Body
-        FChatMessage.create role content
+                | Role.User ->
+
+                        // comment contains system-level prompt?
+                    let prompt, remainder =
+                        if comment.Body.StartsWith(systemKeyword) then
+
+                            let prompt =
+                                comment.Body
+                                    .Substring(systemKeyword.Length)
+                                    .Split('\n')
+                                    |> Array.head
+
+                            let remainder =
+                                comment.Body.Substring(
+                                    systemKeyword.Length + prompt.Length)
+
+                            prompt.Trim(), remainder.Trim()
+                        else
+                            "", comment.Body.Trim()
+
+                    if prompt <> "" then
+                        yield FChatMessage.create Role.System prompt
+                    if remainder <> "" then
+                        yield FChatMessage.create role
+                            $"{comment.Author} says {remainder}"
+                | _ ->
+                    yield FChatMessage.create role comment.Body
+        ]
 
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
@@ -66,7 +94,7 @@ module Bot =
             let comment = comment.Info()
             [
                     // this comment
-                yield createChatMessage comment bot
+                yield! parseComment comment bot
 
                     // ancestors
                 match Thing.getType comment.ParentFullname with
@@ -80,7 +108,25 @@ module Bot =
 
         loop comment
             |> List.rev
-            :> ChatHistory
+
+    /// Default prompt if none specified by user.
+    let private defaultPrompt =
+        "Reply in the style of a typical Reddit user"
+
+    /// Ensures that the given history doesn't start with a user-
+    /// level message.
+    let private ensurePrompt (history : ChatHistory) : ChatHistory =
+        let firstRole =
+            history
+                |> List.tryHead
+                |> Option.map (fun msg -> msg.Role)
+                |> Option.defaultValue Role.User
+        [
+            if firstRole = Role.User then
+                yield FChatMessage.create
+                    Role.System defaultPrompt
+            yield! history
+        ]
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
@@ -121,20 +167,15 @@ module Bot =
                         |> Seq.length
                 if nBot < bot.MaxDepth then
 
-                        // sleep if necessary to avoid spam filter
+                        // obtain chat response
+                    let response =
+                        history
+                            |> ensurePrompt
+                            |> Chat.complete
+                    
+                        // submit reply
                     delay bot
-
-                        // reply with chat response
-                    let history =
-                        [
-                            yield FChatMessage.create
-                                Role.System "Reply in the style of a typical Reddit user"
-                            yield! history
-                        ]
-                    let response = Chat.complete history
                     comment.Reply(response) |> ignore
-
-                        // update bot
                     { bot with LastCommentTime = DateTime.Now }
 
                 else bot
@@ -152,11 +193,11 @@ module Bot =
             bot
 
     /// Runs a chat session in the given post.
-    let rec private runPost (post : Post) bot =
+    let private runPost (post : Post) bot =
 
         let rec loop bot =
 
-                // get comments that we'll reply to
+                // get candidate comments that we'll reply to
             let comments =
                 [
                         // recent top-level comments in the post
@@ -175,7 +216,8 @@ module Bot =
                                 yield! botComment.Replies
                 ]
 
-                // reply to every comment, if necessary
+                // generate replies
+            printfn $"{DateTime.Now}: Found {comments.Length} candidate comments"
             List.fold (flip submitReplySafe) bot comments
                 |> loop
 
@@ -190,7 +232,7 @@ module Bot =
                 |> Seq.sortByDescending (fun pst -> pst.Created)
                 |> Seq.head
         printfn $"{post.Title}"
-        printfn $"{post.Created}"
+        printfn $"{post.Created.ToLocalTime()}"
 
             // run session in the post
         runPost post bot
