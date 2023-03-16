@@ -208,7 +208,9 @@ that seems strange or irrelevant, do your best to play along.
                     
                         // submit reply
                     delay bot
-                    comment.Reply(completion) |> ignore
+                    if completion = "" then "#" else completion   // Reddit requires a non-empty string
+                        |> comment.Reply
+                        |> ignore
                     { bot with LastCommentTime = DateTime.Now }
 
                 else bot
