@@ -33,7 +33,7 @@ module Bot =
     let create name =
         {
             User = Reddit.client.User(name : string)
-            MaxDepth = 3
+            MaxDepth = 4
             MinCommentDelay =
                 TimeSpan(hours = 0, minutes = 5, seconds = 5)
             LastCommentTime = DateTime.Now
