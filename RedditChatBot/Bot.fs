@@ -215,22 +215,24 @@ that seems strange or irrelevant, do your best to play along.
 
         else bot
 
+    /// Handles the given exception.
+    let private handleException (exn : exn) =
+        printfn ""
+        printfn $"{exn}"
+        printfn ""
+        Thread.Sleep(10000)   // wait for problem to clear up, hopefully
+
     /// Replies to the given comment safely, if necessary.
     let private submitReplySafe comment bot =
         try
             submitReply comment bot
         with exn ->
-            printfn ""
-            printfn $"{exn}"
-            printfn ""
-            Thread.Sleep(10000)   // wait for problem to clear up, hopefully
+            handleException exn
             bot
 
     /// Runs a chat session in the given post.
-    let private runPost (post : Post) bot =
-
-        let rec loop bot =
-
+    let rec private runPost (post : Post) bot =
+        try
                 // get candidate user comments that we'll reply to
             let userComments =
                 [|
@@ -261,9 +263,11 @@ that seems strange or irrelevant, do your best to play along.
                 ||> Seq.fold (fun bot (idx, comment) ->
                     printfn $"Comment {idx+1}/{userComments.Length}"
                     submitReplySafe comment bot)
-                |> loop
+                |> runPost post
 
-        loop bot |> ignore
+        with exn ->
+            handleException exn
+            runPost post bot
 
     /// Runs the given bot.
     let run bot =
@@ -277,4 +281,4 @@ that seems strange or irrelevant, do your best to play along.
         printfn $"{post.Created.ToLocalTime()}"
 
             // run session in the post
-        runPost post bot
+        runPost post bot |> ignore
