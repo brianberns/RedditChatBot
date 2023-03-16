@@ -39,12 +39,6 @@ module Bot =
             LastCommentTime = DateTime.Now
         }
 
-    /// Bot's assessment of a user comment.
-    type private Assessment =
-        | Normal
-        | Strange
-        | Inappropriate
-
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
         if comment.Author = bot.User.Name then Role.System
@@ -62,7 +56,7 @@ module Bot =
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
 
-        let rec loop (comment : Comment) =   // to-do: use fewer round-trips
+        let rec loop (comment : Comment) =
             let comment = comment.Info()
             [
                     // this comment
@@ -87,6 +81,24 @@ module Bot =
             .Replace("\r", "")
             .Replace("\n", " ")
             .Trim()
+
+    (*
+     * ChatGPT can be coaxed to go along with comments that it sees
+     * as strange or irrelevant, but it often reacts sharply to
+     * anything that it finds disrespectful or inappropriate, even
+     * if instructed not to. So our strategy is to:
+     *
+     * - Ask ChatGPT to categorize all comments before replying.
+     * - Ask it to go along with "strange" comments.
+     * - Handle "inappropriate" comments by filtering out sharp
+     *   replies.
+     *)
+
+    /// Bot's assessment of a user comment.
+    type private Assessment =
+        | Normal
+        | Strange
+        | Inappropriate
 
     /// Assessment prompt.
     let private assessmentPrompt =
@@ -135,9 +147,8 @@ that seems strange or irrelevant, do your best to play along.
 
         let rec loop n =
             let completion = complete prompt history
-            if isNegative completion then
-                if n > 0 then loop (n - 1)
-                else "No comment."
+            if isNegative completion && n > 0 then
+                loop (n - 1)
             else
                 completion
 
@@ -157,7 +168,7 @@ that seems strange or irrelevant, do your best to play along.
     let private submitReply (comment : Comment) bot =
 
             // ensure we have full details
-        let comment = comment.Info()
+        assert(isNull comment.Body |> not)
 
             // ignore bot's own comments
         if getRole comment bot <> Role.System
@@ -172,10 +183,8 @@ that seems strange or irrelevant, do your best to play along.
                 // if not, begin to create a reply
             if handled then bot
             else
-                    // get comment history
-                let history = getHistory comment bot
-
                     // avoid deeply nested threads
+                let history = getHistory comment bot
                 let nBot =
                     history
                         |> Seq.where (fun msg ->
@@ -220,9 +229,9 @@ that seems strange or irrelevant, do your best to play along.
 
         let rec loop bot =
 
-                // get candidate comments that we'll reply to
-            let comments =
-                [
+                // get candidate user comments that we'll reply to
+            let userComments =
+                [|
                         // recent top-level comments in the post
                     yield! post.Comments.GetNew(limit = 100)
 
@@ -237,21 +246,18 @@ that seems strange or irrelevant, do your best to play along.
                             let botComment = botComment.Info()
                             if botComment.Root.Id = post.Id then
                                 yield! botComment.Replies
-                ]
+                |]
 
                 // generate replies
             printfn ""
-            printfn $"Found {comments.Length} comment(s)"
-            let indexedComments =
-                comments
-                    |> Seq.sortBy (fun comment ->
-                        if comment.Created < DateTime(year = 2023, month = 1, day = 1) then
-                            printfn $"Unexpected comment date: {comment.Created}"
-                        comment.Created)
-                    |> Seq.indexed
-            (bot, indexedComments)
+            printfn $"Found {userComments.Length} comment(s)"
+            let fullComments =
+                userComments
+                    |> Seq.map (fun comment -> comment.Info())
+                    |> Seq.sortBy (fun comment -> comment.Created)
+            (bot, Seq.indexed fullComments)
                 ||> Seq.fold (fun bot (idx, comment) ->
-                    printfn $"Comment {idx+1}/{comments.Length}"
+                    printfn $"Comment {idx+1}/{userComments.Length}"
                     submitReplySafe comment bot)
                 |> loop
 
