@@ -233,18 +233,19 @@ that seems strange or irrelevant, do your best to play along.
     /// Runs a chat session in the given post.
     let rec private runPost (post : Post) bot =
         try
-                // get candidate user comments that we'll reply to
+                // get candidate user comments that we might reply to
             let userComments =
                 [|
                         // recent top-level comments in the post
-                    yield! post.Comments.GetNew(limit = 100)
+                    yield! post.Comments.GetNew(
+                        context = 0,
+                        limit = 100)
 
                         // replies to the bot's recent comments in this post
                     let botCommentHistory =
                         bot.User.GetCommentHistory(
                             context = 0,
-                            limit = 100,
-                            sort = "new")
+                            limit = 100)
                     for botComment in botCommentHistory do
                         if botComment.Created >= post.Created then
                             let botComment = botComment.Info()
@@ -254,14 +255,14 @@ that seems strange or irrelevant, do your best to play along.
 
                 // generate replies
             printfn ""
-            printfn $"Found {userComments.Length} comment(s)"
+            printfn $"Found {userComments.Length} candidate comment(s)"
             let fullComments =
                 userComments
                     |> Seq.map (fun comment -> comment.Info())
                     |> Seq.sortBy (fun comment -> comment.Created)
             (bot, Seq.indexed fullComments)
                 ||> Seq.fold (fun bot (idx, comment) ->
-                    printfn $"Comment {idx+1}/{userComments.Length}"
+                    printfn $"   Processing comment {idx+1}/{userComments.Length}"
                     submitReplySafe comment bot)
                 |> runPost post
 
