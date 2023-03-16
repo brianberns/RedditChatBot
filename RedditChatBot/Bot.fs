@@ -143,7 +143,9 @@ that seems strange or irrelevant, do your best to play along.
         let isNegative (text : string) =
             let text = text.ToLower()
             text.Contains("disrespectful")
+                || text.Contains("not respectful")
                 || text.Contains("inappropriate")
+                || text.Contains("not appropriate")
 
         let rec loop n =
             let completion = complete prompt history
