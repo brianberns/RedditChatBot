@@ -239,13 +239,14 @@ that seems strange or irrelevant, do your best to play along.
                         // recent top-level comments in the post
                     yield! post.Comments.GetNew(
                         context = 0,
-                        limit = 100)
+                        limit = 50)
 
                         // replies to the bot's recent comments in this post
                     let botCommentHistory =
                         bot.User.GetCommentHistory(
                             context = 0,
-                            limit = 100)
+                            limit = 50,
+                            sort = "new")
                     for botComment in botCommentHistory do
                         let botComment = botComment.Info()
                         if botComment.Root.Id = post.Id then
