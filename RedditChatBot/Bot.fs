@@ -261,7 +261,7 @@ that seems strange or irrelevant, do your best to play along.
                     |> Seq.sortBy (fun comment -> comment.Created)
             (bot, Seq.indexed fullComments)
                 ||> Seq.fold (fun bot (idx, comment) ->
-                    printfn $"   Processing comment {idx+1}/{userComments.Length}"
+                    printfn $"Processing comment {idx+1}/{userComments.Length}"
                     submitReplySafe comment bot)
                 |> runPost post
 
