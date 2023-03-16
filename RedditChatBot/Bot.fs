@@ -247,10 +247,9 @@ that seems strange or irrelevant, do your best to play along.
                             context = 0,
                             limit = 100)
                     for botComment in botCommentHistory do
-                        if botComment.Created >= post.Created then
-                            let botComment = botComment.Info()
-                            if botComment.Root.Id = post.Id then
-                                yield! botComment.Replies
+                        let botComment = botComment.Info()
+                        if botComment.Root.Id = post.Id then
+                            yield! botComment.Replies
                 |]
 
                 // generate replies
