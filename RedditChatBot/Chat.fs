@@ -16,7 +16,7 @@ type Role =
     | User
 
     /// ChatGPT response.
-    | Assistance
+    | Assistant
 
 /// F# chat message type.
 type FChatMessage =
@@ -43,7 +43,7 @@ module FChatMessage =
             match msg.Role with
                 | Role.System -> ChatMessage.FromSystem
                 | Role.User -> ChatMessage.FromUser
-                | Role.Assistance -> ChatMessage.FromAssistance
+                | Role.Assistant -> ChatMessage.FromAssistant
         create msg.Content
 
 /// Chonological sequence of chat messages.
