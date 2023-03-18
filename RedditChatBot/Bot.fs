@@ -242,59 +242,59 @@ that seems strange or irrelevant, do your best to play along.
         printfn ""
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
-    /// Replies to the given comment safely, if necessary.
+    /// Replies safely to the given comment, if necessary.
     let private submitReplySafe comment bot =
-        try
-            submitReply comment bot
-        with exn ->
-            handleException exn
-            false, bot
+        tryN 3 (fun () ->
+            try
+                true, submitReply comment bot
+            with exn ->
+                handleException exn
+                false, (false, bot))
 
-    /// Runs a chat session in the given post.
-    let rec private runPost (post : Post) bot =
-        try
-                // get candidate user comments that we might reply to
-            let userComments =
-                [|
-                        // recent top-level comments in the post
-                    yield! post.Comments.GetNew(
+    /// Runs a the given bot in the given post.
+    let rec private run (post : Post) bot =
+
+            // get candidate user comments that we might reply to
+        let userComments =
+            [|
+                    // recent top-level comments in the post
+                yield! post.Comments.GetNew(
+                    context = 0,
+                    limit = 35)
+
+                    // replies to the bot's recent comments in this post
+                let botCommentHistory =
+                    bot.User.GetCommentHistory(
                         context = 0,
-                        limit = 35)
+                        limit = 35,
+                        sort = "new")
+                for botComment in botCommentHistory do
+                    let botComment = botComment.Info()
+                    if botComment.Root.Id = post.Id then
+                        yield! botComment.Replies
+            |]
 
-                        // replies to the bot's recent comments in this post
-                    let botCommentHistory =
-                        bot.User.GetCommentHistory(
-                            context = 0,
-                            limit = 35,
-                            sort = "new")
-                    for botComment in botCommentHistory do
-                        let botComment = botComment.Info()
-                        if botComment.Root.Id = post.Id then
-                            yield! botComment.Replies
-                |]
+            // generate replies
+        printfn ""
+        let fullComments =
+            userComments
+                |> Seq.map (fun comment -> comment.Info())
+                |> Seq.sortBy (fun comment -> comment.Created)
+        (bot, Seq.indexed fullComments)
+            ||> Seq.fold (fun bot (idx, comment) ->
+                printfn $"Processing comment {idx+1}/{userComments.Length}"
+                let flag, bot = submitReplySafe comment bot
+                if flag then printfn "Reply submitted"
+                bot)
+            |> run post
 
-                // generate replies
-            printfn ""
-            let fullComments =
-                userComments
-                    |> Seq.map (fun comment -> comment.Info())
-                    |> Seq.sortBy (fun comment -> comment.Created)
-            (bot, Seq.indexed fullComments)
-                ||> Seq.fold (fun bot (idx, comment) ->
-                    printfn $"Processing comment {idx+1}/{userComments.Length}"
-                    let flag, bot = submitReplySafe comment bot
-                    if flag then printfn "Reply submitted"
-                    bot)
-                |> runPost post
+    /// Starts a bot.
+    let start () =
 
-        with exn ->
-            handleException exn
-            runPost post bot
+            // create bot
+        let bot = create "friendly-chat-bot"
 
-    /// Runs the given bot.
-    let run bot =
-
-           // get bot's latest post
+            // get bot's latest post
         let post =
             bot.User.GetPostHistory()   // must sort manually
                 |> Seq.sortByDescending (fun pst -> pst.Created)
@@ -302,5 +302,5 @@ that seems strange or irrelevant, do your best to play along.
         printfn $"{post.Title}"
         printfn $"{post.Created.ToLocalTime()}"
 
-            // run session in the post
-        runPost post bot |> ignore
+            // run bot in the post
+        run post bot |> ignore
