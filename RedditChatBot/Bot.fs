@@ -10,9 +10,7 @@ type Bot =
         /// Bot's Reddit user account.
         User : User
 
-        /// Maximum number of bot comments in a nested thread. This
-        /// avoids the possibility of infinite recursion with another
-        /// bot (or determined human).
+        /// Maximum number of bot comments in a nested thread.
         MaxCommentDepth : int
 
         /// Minimum time between comments, to avoid Reddit's spam filter.
