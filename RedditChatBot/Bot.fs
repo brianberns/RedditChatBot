@@ -28,7 +28,7 @@ module Bot =
 
     /// Creates a bot with the given user name.
     let create name =
-        let client = Reddit.createClient ()
+        let client = Reddit.createClient ()                    // always create a fresh client, since Reddit occasionally invalidates existing one
         let minCommentDelay =
             TimeSpan(hours = 0, minutes = 5, seconds = 5)
         {
