@@ -30,7 +30,7 @@ module Bot =
             User = Reddit.client.User(name : string)
             MaxCommentDepth = 4
             MinCommentDelay = minCommentDelay
-            LastCommentTime = DateTime.Now - minCommentDelay
+            LastCommentTime = DateTime.Now - minCommentDelay   // allow first comment immediately
         }
 
     /// Determines the role of the given comment's author.
