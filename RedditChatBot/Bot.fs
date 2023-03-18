@@ -243,9 +243,18 @@ that seems strange or irrelevant, do your best to play along.
 
     /// Handles the given exception.
     let private handleException (exn : exn) =
-        printfn ""
-        printfn $"{exn}"
-        printfn ""
+
+        let dump (exn : exn) =
+            printfn ""
+            printfn $"{exn}"
+            printfn ""
+
+        match exn with
+            | :? AggregateException as aggExn ->
+                for innerExn in aggExn.InnerExceptions do
+                    dump innerExn
+            | _ -> dump exn
+
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
