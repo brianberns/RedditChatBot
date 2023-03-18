@@ -38,7 +38,8 @@ module Bot =
         if comment.Author = bot.User.Name then Role.System
         else Role.User
 
-    /// Converts the given comment to a chat message.
+    /// Converts the given comment to a chat message based on its
+    /// author's role.
     let private createChatMessage comment bot =
         let role = getRole comment bot
         let content =
@@ -76,12 +77,44 @@ module Bot =
         loop comment
             |> List.rev
 
+    /// Runs the given function repeatedly until it succeeds or
+    /// we run out of tries.
+    let rec private tryN numTries f =
+        let success, value = f ()
+        if not success && numTries > 1 then
+            tryN (numTries - 1) f
+        else value
+
     /// Fixes prompt whitespace.
     let private fixPrompt (prompt : string) =
         prompt
             .Replace("\r", "")
             .Replace("\n", " ")
             .Trim()
+
+    /// Completes the given history using the given system-level
+    /// prompt.
+    let private complete prompt (history : ChatHistory) =
+        Chat.complete [
+            yield FChatMessage.create Role.System prompt
+            yield! history
+        ]
+
+    /// Completes the given history positively, using the given
+    /// system-level prompt.
+    let private completePositive prompt history =
+
+        let isNegative (text : string) =
+            let text = text.ToLower()
+            text.Contains("disrespectful")
+                || text.Contains("not respectful")
+                || text.Contains("inappropriate")
+                || text.Contains("not appropriate")
+
+        tryN 3 (fun () ->
+            let completion = complete prompt history
+            let success = not (isNegative completion)
+            success, completion)
 
     (*
      * ChatGPT can be coaxed to go along with comments that it sees
@@ -110,17 +143,30 @@ reply with "Inappropriate". If any comments are strange or irrelevant,
 reply with "Strange". Otherwise, reply with "Normal".
         """
 
-    /// Parses the given assessment.
-    let private parseAssessment (str : string) =
-        if str.ToLower().StartsWith("inappropriate") then
-            Inappropriate
-        elif str.ToLower().StartsWith("strange") then
-            Strange
-        elif str.ToLower().StartsWith("normal") then
-            Normal
+    /// Parses the given assessment string.
+    let private tryParseAssessment (str : string) =
+        let str = str.ToLower()
+        if str.StartsWith("inappropriate") then
+            Ok Inappropriate
+        elif str.StartsWith("strange") then
+            Ok Strange
+        elif str.StartsWith("normal") then
+            Ok Normal
         else
-            printfn $"Unexpected assessment: {str}"
-            Normal
+            Error str
+
+    /// Assesses the given history.
+    let private assess history =
+        tryN 3 (fun () ->
+            let assessmentRes =
+                history
+                    |> complete assessmentPrompt
+                    |> tryParseAssessment
+            match assessmentRes with
+                | Ok assessment -> true, assessment
+                | Error str ->
+                    printfn $"Unexpected assessment: {str}"
+                    false, Normal)
 
     /// Reply prompt.
     let private replyPrompt =
@@ -128,34 +174,6 @@ reply with "Strange". Otherwise, reply with "Normal".
 You are a friendly Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
         """
-
-    /// Completes the given history using the given system-level
-    /// prompt.
-    let private complete prompt (history : ChatHistory) =
-        Chat.complete [
-            yield FChatMessage.create Role.System prompt
-            yield! history
-        ]
-
-    /// Completes the given history positively, using the given
-    /// system-level prompt.
-    let private completePositive prompt history =
-
-        let isNegative (text : string) =
-            let text = text.ToLower()
-            text.Contains("disrespectful")
-                || text.Contains("not respectful")
-                || text.Contains("inappropriate")
-                || text.Contains("not appropriate")
-
-        let rec loop n =
-            let completion = complete prompt history
-            if isNegative completion && n > 0 then
-                loop (n - 1)
-            else
-                completion
-
-        loop 2
 
     /// Delays the given bot, if necessary, to avoid spam filter.
     let private delay bot =
@@ -196,9 +214,7 @@ that seems strange or irrelevant, do your best to play along.
                 if nBot < bot.MaxCommentDepth then
 
                         // assess input
-                    let assessment =
-                        complete assessmentPrompt history
-                            |> parseAssessment
+                    let assessment = assess history
 
                         // obtain chat completion
                     let completion =
