@@ -85,13 +85,6 @@ module Bot =
             tryN (numTries - 1) f
         else value
 
-    /// Fixes prompt whitespace.
-    let private fixPrompt (prompt : string) =
-        prompt
-            .Replace("\r", "")
-            .Replace("\n", " ")
-            .Trim()
-
     /// Completes the given history using the given system-level
     /// prompt.
     let private complete prompt (history : ChatHistory) =
@@ -127,6 +120,13 @@ module Bot =
      * - Handle "inappropriate" comments by filtering out sharp
      *   replies.
      *)
+
+    /// Fixes prompt whitespace.
+    let private fixPrompt (prompt : string) =
+        prompt
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
 
     /// Bot's assessment of a user comment.
     type private Assessment =
@@ -175,7 +175,7 @@ You are a friendly Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
         """
 
-    /// Delays the given bot, if necessary, to avoid spam filter.
+    /// Delays the given bot, if necessary.
     let private delay bot =
         let nextCommentTime =
             bot.LastCommentTime + bot.MinCommentDelay
@@ -191,7 +191,7 @@ that seems strange or irrelevant, do your best to play along.
             // ensure we have full details
         assert(isNull comment.Body |> not)
 
-            // ignore bot's own comments
+            // don't reply to bot's own comments
         if getRole comment bot <> Role.System
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
@@ -202,7 +202,8 @@ that seems strange or irrelevant, do your best to play along.
                         getRole child bot = Role.System)
 
                 // if not, begin to create a reply
-            if handled then bot
+            if handled then
+                false, bot
             else
                     // avoid deeply nested threads
                 let history = getHistory comment bot
@@ -228,11 +229,11 @@ that seems strange or irrelevant, do your best to play along.
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
                         |> comment.Reply
                         |> ignore
-                    { bot with LastCommentTime = DateTime.Now }
+                    true, { bot with LastCommentTime = DateTime.Now }
 
-                else bot
+                else false, bot
 
-        else bot
+        else false, bot
 
     /// Handles the given exception.
     let private handleException (exn : exn) =
@@ -247,7 +248,7 @@ that seems strange or irrelevant, do your best to play along.
             submitReply comment bot
         with exn ->
             handleException exn
-            bot
+            false, bot
 
     /// Runs a chat session in the given post.
     let rec private runPost (post : Post) bot =
@@ -274,7 +275,6 @@ that seems strange or irrelevant, do your best to play along.
 
                 // generate replies
             printfn ""
-            printfn $"Found {userComments.Length} candidate comment(s)"
             let fullComments =
                 userComments
                     |> Seq.map (fun comment -> comment.Info())
@@ -282,7 +282,9 @@ that seems strange or irrelevant, do your best to play along.
             (bot, Seq.indexed fullComments)
                 ||> Seq.fold (fun bot (idx, comment) ->
                     printfn $"Processing comment {idx+1}/{userComments.Length}"
-                    submitReplySafe comment bot)
+                    let flag, bot = submitReplySafe comment bot
+                    if flag then printfn "Reply submitted"
+                    bot)
                 |> runPost post
 
         with exn ->
