@@ -264,6 +264,8 @@ that seems strange or irrelevant, do your best to play along.
         let commentLimit = 35
 
             // get candidate user comments that we might reply to
+        printfn ""
+        printfn $"Gathering user comments at {DateTime.Now}"
         let userComments =
             [|
                     // recent top-level comments in the post
@@ -284,7 +286,6 @@ that seems strange or irrelevant, do your best to play along.
             |]
 
             // generate replies
-        printfn ""
         let fullComments =
             userComments
                 |> Seq.map (fun comment -> comment.Info())
