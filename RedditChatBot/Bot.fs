@@ -7,11 +7,13 @@ open Reddit.Controllers
 
 type Bot =
     {
-        /// Bot's user account.
+        /// Bot's Reddit user account.
         User : User
 
-        /// Maximum number of nested bot replies in thread.
-        MaxDepth : int
+        /// Maximum number of bot comments in a nested thread. This
+        /// avoids the possibility of infinite recursion with another
+        /// bot (or determined human).
+        MaxCommentDepth : int
 
         /// Minimum time between comments, to avoid Reddit's spam filter.
         MinCommentDelay : TimeSpan
@@ -22,18 +24,11 @@ type Bot =
 
 module Bot =
 
-    (*
-     * The Reddit.NET API presents a very leaky abstraction. As a
-     * general rule, we call Post.About() and Comment.Info()
-     * defensively to make sure we have the full details of a thing.
-     * (Unfortunately, Comment.About() seems to have a race condition.)
-     *)
-
     /// Creates a bot with the given user name.
     let create name =
         {
             User = Reddit.client.User(name : string)
-            MaxDepth = 4
+            MaxCommentDepth = 4
             MinCommentDelay =
                 TimeSpan(hours = 0, minutes = 5, seconds = 5)
             LastCommentTime = DateTime.Now
@@ -52,6 +47,13 @@ module Bot =
                 | Role.User -> $"{comment.Author} says {comment.Body}"
                 | _ -> comment.Body
         FChatMessage.create role content
+
+    (*
+     * The Reddit.NET API presents a very leaky abstraction. As a
+     * general rule, we call Post.About() and Comment.Info()
+     * defensively to make sure we have the full details of a thing.
+     * (Unfortunately, Comment.About() seems to have a race condition.)
+     *)
 
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
@@ -192,7 +194,7 @@ that seems strange or irrelevant, do your best to play along.
                         |> Seq.where (fun msg ->
                             msg.Role = Role.System)
                         |> Seq.length
-                if nBot < bot.MaxDepth then
+                if nBot < bot.MaxCommentDepth then
 
                         // assess input
                     let assessment =
