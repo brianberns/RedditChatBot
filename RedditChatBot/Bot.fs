@@ -143,36 +143,32 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         fixPrompt """
-You are a friendly Reddit user. Assess the given comments, and reply
-with a single word. If any comments are disrespectful or inappropriate,
-reply with "Inappropriate". If any comments are strange or irrelevant,
+You are a friendly Reddit user. Assess the given comment, and reply
+with a single word. If the comment is disrespectful or inappropriate,
+reply with "Inappropriate". If the comment is strange or irrelevant,
 reply with "Strange". Otherwise, reply with "Normal".
         """
 
     /// Parses the given assessment string.
-    let private tryParseAssessment (str : string) =
+    let private parseAssessment (str : string) =
         let str = str.ToLower()
         if str.StartsWith("inappropriate") then
-            Ok Inappropriate
+            Inappropriate
         elif str.StartsWith("strange") then
-            Ok Strange
+            Strange
         elif str.StartsWith("normal") then
-            Ok Normal
+            Normal
         else
-            Error str
+            printfn $"Unexpected assessment: {str}"
+            Normal
 
     /// Assesses the given history.
-    let private assess history =
-        tryN 3 (fun () ->
-            let assessmentRes =
-                history
-                    |> complete assessmentPrompt
-                    |> tryParseAssessment
-            match assessmentRes with
-                | Ok assessment -> true, assessment
-                | Error str ->
-                    printfn $"Unexpected assessment: {str}"
-                    false, Normal)
+    let private assess (history : ChatHistory) =
+        history
+            |> Seq.where (fun msg -> msg.Role = Role.User)
+            |> Seq.map (fun msg -> msg.Content)
+            |> String.concat "\r\n"
+            |> parseAssessment
 
     /// Reply prompt.
     let private replyPrompt =
