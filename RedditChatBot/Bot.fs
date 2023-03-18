@@ -258,7 +258,7 @@ that seems strange or irrelevant, do your best to play along.
                 false, (false, bot))
 
     /// Runs a the given bot in the given post.
-    let rec private run (post : Post) bot =
+    let rec private runPost (post : Post) bot =
 
             // get candidate user comments that we might reply to
         let userComments =
@@ -292,10 +292,10 @@ that seems strange or irrelevant, do your best to play along.
                 let flag, bot = submitReplySafe comment bot
                 if flag then printfn "Reply submitted"
                 bot)
-            |> run post
+            |> runPost post
 
-    /// Starts a bot.
-    let rec start () =
+    /// Runs a bot.
+    let rec run () =
         try
                 // create bot
             let bot = create "friendly-chat-bot"
@@ -309,7 +309,7 @@ that seems strange or irrelevant, do your best to play along.
             printfn $"{post.Created.ToLocalTime()}"
 
                 // run bot in the post
-            run post bot |> ignore
+            runPost post bot |> ignore
 
         with exn ->
 
@@ -318,4 +318,4 @@ that seems strange or irrelevant, do your best to play along.
             printfn ""
             printfn "*** Restarting ***"
             printfn ""
-            start ()   // restart from scratch
+            run ()   // restart from scratch
