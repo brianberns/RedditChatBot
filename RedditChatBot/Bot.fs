@@ -24,12 +24,13 @@ module Bot =
 
     /// Creates a bot with the given user name.
     let create name =
+        let minCommentDelay =
+            TimeSpan(hours = 0, minutes = 5, seconds = 5)
         {
             User = Reddit.client.User(name : string)
             MaxCommentDepth = 4
-            MinCommentDelay =
-                TimeSpan(hours = 0, minutes = 5, seconds = 5)
-            LastCommentTime = DateTime.Now
+            MinCommentDelay = minCommentDelay
+            LastCommentTime = DateTime.Now - minCommentDelay
         }
 
     /// Determines the role of the given comment's author.
