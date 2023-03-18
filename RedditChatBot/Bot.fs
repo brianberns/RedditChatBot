@@ -311,5 +311,11 @@ that seems strange or irrelevant, do your best to play along.
                 // run bot in the post
             run post bot |> ignore
 
-        with _ ->
+        with exn ->
+
+            handleException exn
+
+            printfn ""
+            printfn "*** Restarting ***"
+            printfn ""
             start ()   // restart from scratch
