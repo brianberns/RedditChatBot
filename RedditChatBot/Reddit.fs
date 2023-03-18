@@ -7,8 +7,8 @@ module Reddit =
     /// Reddit application settings.
     let private settings = Settings.get.Reddit
 
-    /// Reddit client.
-    let client =
+    /// Reddit API client.
+    let createClient () =
         RedditClient(
             appId = settings.ApiKey,
             refreshToken = settings.RefreshToken,

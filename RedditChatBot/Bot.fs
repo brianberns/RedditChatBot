@@ -3,10 +3,14 @@
 open System
 open System.Threading
 
+open Reddit
 open Reddit.Controllers
 
 type Bot =
     {
+        /// Reddit API client.
+        RedditClient : RedditClient
+
         /// Bot's Reddit user account.
         User : User
 
@@ -24,10 +28,12 @@ module Bot =
 
     /// Creates a bot with the given user name.
     let create name =
+        let client = Reddit.createClient ()
         let minCommentDelay =
             TimeSpan(hours = 0, minutes = 5, seconds = 5)
         {
-            User = Reddit.client.User(name : string)
+            RedditClient = client
+            User = client.User(name : string)
             MaxCommentDepth = 4
             MinCommentDelay = minCommentDelay
             LastCommentTime = DateTime.Now - minCommentDelay   // allow first comment immediately
@@ -68,7 +74,7 @@ module Bot =
                 match Thing.getType comment.ParentFullname with
                     | ThingType.Comment ->
                         let parent =
-                            Reddit.client
+                            bot.RedditClient
                                 .Comment(comment.ParentFullname)
                         yield! loop parent
                     | _ -> ()
@@ -289,18 +295,21 @@ that seems strange or irrelevant, do your best to play along.
             |> run post
 
     /// Starts a bot.
-    let start () =
+    let rec start () =
+        try
+                // create bot
+            let bot = create "friendly-chat-bot"
 
-            // create bot
-        let bot = create "friendly-chat-bot"
+                // get bot's latest post
+            let post =
+                bot.User.GetPostHistory()   // must sort manually
+                    |> Seq.sortByDescending (fun pst -> pst.Created)
+                    |> Seq.head
+            printfn $"{post.Title}"
+            printfn $"{post.Created.ToLocalTime()}"
 
-            // get bot's latest post
-        let post =
-            bot.User.GetPostHistory()   // must sort manually
-                |> Seq.sortByDescending (fun pst -> pst.Created)
-                |> Seq.head
-        printfn $"{post.Title}"
-        printfn $"{post.Created.ToLocalTime()}"
+                // run bot in the post
+            run post bot |> ignore
 
-            // run bot in the post
-        run post bot |> ignore
+        with _ ->
+            start ()   // restart from scratch
