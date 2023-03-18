@@ -260,19 +260,22 @@ that seems strange or irrelevant, do your best to play along.
     /// Runs a the given bot in the given post.
     let rec private runPost (post : Post) bot =
 
+            // number of comments to fetch
+        let commentLimit = 35
+
             // get candidate user comments that we might reply to
         let userComments =
             [|
                     // recent top-level comments in the post
                 yield! post.Comments.GetNew(
                     context = 0,
-                    limit = 35)
+                    limit = commentLimit)
 
                     // replies to the bot's recent comments in this post
                 let botCommentHistory =
                     bot.User.GetCommentHistory(
                         context = 0,
-                        limit = 35,
+                        limit = commentLimit,
                         sort = "new")
                 for botComment in botCommentHistory do
                     let botComment = botComment.Info()
