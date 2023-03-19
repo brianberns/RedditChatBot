@@ -45,8 +45,7 @@ that seems strange or irrelevant, do your best to play along.
         printfn ""
 
         for prompt in [ assessmentPrompt; replyPrompt ] do
-            Chat.complete [
-                FChatMessage.create Role.System prompt
+            Chat.complete prompt [
                 FChatMessage.create Role.User userComment
             ] |> printfn "%s"
             printfn ""
