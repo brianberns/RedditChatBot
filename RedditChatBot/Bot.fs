@@ -310,7 +310,7 @@ type BotTrigger(config : IConfiguration) =
                         let flag, bot' = Bot.submitReply comment bot
                         if flag then
                             bot'.RedditClient.Account.Messages
-                                .ReadMessage(message.Fullname)
+                                .ReadMessage(message.Name)
                         bot'
                     | _ -> bot)
             |> ignore

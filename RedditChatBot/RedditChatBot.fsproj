@@ -13,9 +13,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
+    <Compile Include="Startup.fs" />
     <Compile Include="Reddit.fs" />
     <Compile Include="Chat.fs" />
-    <Compile Include="Startup.fs" />
     <Compile Include="Bot.fs" />
   </ItemGroup>
 
