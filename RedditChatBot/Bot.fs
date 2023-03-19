@@ -268,9 +268,12 @@ that seems strange or irrelevant, do your best to play along.
     /// Monitors and replies to incoming messages.
     let rec monitorMessages bot =
 
+            // get candidate messages that we might reply to
         let messages =
             bot.RedditClient.Account.Messages.GetMessagesInbox()
+                |> Seq.sortBy (fun message -> message.CreatedUTC)
 
+            // generate replies
         (bot, messages)
             ||> Seq.fold (fun bot message ->
                 match Thing.getType message.Name with
