@@ -269,7 +269,7 @@ that seems strange or irrelevant, do your best to play along.
     let rec private runPost (post : Post) bot =
 
             // number of comments to fetch
-        let commentLimit = 35
+        let commentLimit = 40
 
             // get candidate user comments that we might reply to
         printfn ""
