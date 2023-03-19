@@ -56,7 +56,7 @@ module Bot =
             ChatClient = Chat.createClient settings.OpenAi
             MaxCommentDepth = 4
             MinCommentDelay = minCommentDelay
-            LastCommentTime = DateTime.Now - minCommentDelay   // allow first comment immediately
+            LastCommentTime = DateTime.Now
             Log = log
         }
 
@@ -278,19 +278,8 @@ that seems strange or irrelevant, do your best to play along.
                 handleException exn bot
                 false, (false, bot))
 
-type BotTrigger(config : IConfiguration) =
-
-    [<FunctionName("MonitorUnreadMessages")>]
-    member _.MonitorUnreadMessages(
-        [<TimerTrigger("0 */5 * * * *")>]
-        timer : TimerInfo,
-        log : ILogger) =
-
-        log.LogInformation("Function triggered")
-        let bot =
-            let settings = config.Get<AppSettings>()
-            Bot.create "friendly-chat-bot" settings log
-        log.LogInformation("Bot initialized")
+    /// Runs the given bot.
+    let run bot =
 
             // get candidate messages that we might reply to
         let messages =
@@ -298,7 +287,7 @@ type BotTrigger(config : IConfiguration) =
                 .GetMessagesUnread(limit = 1000)
                 |> Seq.sortBy (fun message -> message.CreatedUTC)
                 |> Seq.toArray
-        log.LogInformation($"{messages.Length} unread messages found")
+        bot.Log.LogInformation($"{messages.Length} unread messages found")
 
             // generate replies
         (bot, messages)
@@ -307,10 +296,28 @@ type BotTrigger(config : IConfiguration) =
                     | ThingType.Comment ->
                         let comment =
                             bot.RedditClient.Comment(message.Name)
-                        let flag, bot' = Bot.submitReply comment bot
+                        let flag, bot' = submitReply comment bot
                         if flag then
                             bot'.RedditClient.Account.Messages
                                 .ReadMessage(message.Name)
                         bot'
                     | _ -> bot)
-            |> ignore
+
+/// Azure function trigger.
+type BotTrigger(config : IConfiguration) =
+
+    /// Runs the bot.
+    [<FunctionName("MonitorUnreadMessages")>]
+    member _.Run(
+        [<TimerTrigger("0 */5 * * * *")>]   // at second 0 of every 5th minute of every hour of each day
+        timer : TimerInfo,
+        log : ILogger) =
+
+            // initialize bot
+        let bot =
+            let settings = config.Get<AppSettings>()
+            Bot.create "friendly-chat-bot" settings log
+        log.LogInformation("Bot initialized")
+
+            // run bot
+        Bot.run bot |> ignore
