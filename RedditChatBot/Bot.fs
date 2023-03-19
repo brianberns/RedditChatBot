@@ -168,6 +168,9 @@ reply with "Strange". Otherwise, reply with "Normal".
             |> Seq.where (fun msg -> msg.Role = Role.User)
             |> Seq.map (fun msg -> msg.Content)
             |> String.concat "\r\n"
+            |> FChatMessage.create Role.User
+            |> List.singleton
+            |> Chat.complete
             |> parseAssessment
 
     /// Reply prompt.
