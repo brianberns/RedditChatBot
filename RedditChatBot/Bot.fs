@@ -143,10 +143,10 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         fixPrompt """
-Your job is to assess a comment posted to Reddit. Your reply must consist
-of a single word, no more or less. If the comment is disrespectful or
-inappropriate, reply with "Inappropriate". If the comment is strange or
-irrelevant, reply with "Strange". Otherwise, reply with "Normal".
+You are a friendly Reddit user. Assess the following comment, and
+reply with a single word. If the comment is disrespectful or
+inappropriate, reply with "Inappropriate". If the comment is strange
+or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         """
 
     /// Parses the given assessment string.
@@ -164,14 +164,15 @@ irrelevant, reply with "Strange". Otherwise, reply with "Normal".
 
     /// Assesses the given history.
     let private assess (history : ChatHistory) =
-        history
-            |> Seq.where (fun msg -> msg.Role = Role.User)
-            |> Seq.map (fun msg -> msg.Content)
-            |> String.concat "\r\n"
-            |> FChatMessage.create Role.User
-            |> List.singleton
-            |> Chat.complete
-            |> parseAssessment
+        let content =
+            history
+                |> Seq.where (fun msg -> msg.Role = Role.User)
+                |> Seq.map (fun msg -> msg.Content)
+                |> String.concat "\r\n"
+        Chat.complete [
+            FChatMessage.create Role.System assessmentPrompt
+            FChatMessage.create Role.User content
+        ] |> parseAssessment
 
     /// Reply prompt.
     let private replyPrompt =
