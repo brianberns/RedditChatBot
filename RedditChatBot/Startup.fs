@@ -5,13 +5,14 @@ open System
 open Microsoft.Azure.Functions.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 
+/// Azure functions statup type.
 type Startup() =
     inherit FunctionsStartup()
 
+    /// Connects to Azure app configuration.
     override _.ConfigureAppConfiguration(builder) =
-        let cs = Environment.GetEnvironmentVariable("ConnectionString")
-        assert(not (isNull cs))
-        builder.ConfigurationBuilder.AddAzureAppConfiguration(cs)
+        Environment.GetEnvironmentVariable("ConnectionString")
+            |> builder.ConfigurationBuilder.AddAzureAppConfiguration
             |> ignore
 
     override _.Configure(_ : IFunctionsHostBuilder) =
