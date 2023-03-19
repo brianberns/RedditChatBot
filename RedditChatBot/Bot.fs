@@ -265,63 +265,32 @@ that seems strange or irrelevant, do your best to play along.
                 handleException exn
                 false, (false, bot))
 
-    /// Runs a the given bot in the given post.
-    let rec private runPost (post : Post) bot =
+    /// Monitors and replies to incoming messages.
+    let rec monitorMessages bot =
 
-            // number of comments to fetch
-        let commentLimit = 40
+        let messages =
+            bot.RedditClient.Account.Messages.GetMessagesInbox()
 
-            // get candidate user comments that we might reply to
-        printfn ""
-        printfn $"Gathering user comments at {DateTime.Now}"
-        let userComments =
-            [|
-                    // recent top-level comments in the post
-                yield! post.Comments.GetNew(
-                    context = 0,
-                    limit = commentLimit)
-
-                    // replies to the bot's recent comments in this post
-                let botCommentHistory =
-                    bot.User.GetCommentHistory(
-                        context = 0,
-                        limit = commentLimit,
-                        sort = "new")
-                for botComment in botCommentHistory do
-                    let botComment = botComment.Info()
-                    if botComment.Root.Id = post.Id then
-                        yield! botComment.Replies
-            |]
-
-            // generate replies
-        let fullComments =
-            userComments
-                |> Seq.map (fun comment -> comment.Info())
-                |> Seq.sortBy (fun comment -> comment.Created)
-        (bot, Seq.indexed fullComments)
-            ||> Seq.fold (fun bot (idx, comment) ->
-                printfn $"Processing comment {idx+1}/{userComments.Length}"
-                let flag, bot = submitReplySafe comment bot
-                if flag then printfn "Reply submitted"
-                bot)
-            |> runPost post
+        (bot, messages)
+            ||> Seq.fold (fun bot message ->
+                match Thing.getType message.Name with
+                    | ThingType.Comment ->
+                        let comment =
+                            bot.RedditClient
+                                .Comment(message.Name)
+                                .Info()
+                        let flag, bot' = submitReplySafe comment bot
+                        if flag then printfn "Reply submitted"
+                        bot'
+                    | _ -> bot)
+            |> monitorMessages
 
     /// Runs a bot.
     let rec run () =
+
         try
-                // create bot
-            let bot = create "friendly-chat-bot"
-
-                // get bot's latest post
-            let post =
-                bot.User.GetPostHistory()   // must sort manually
-                    |> Seq.sortByDescending (fun pst -> pst.Created)
-                    |> Seq.head
-            printfn $"{post.Title}"
-            printfn $"{post.Created.ToLocalTime()}"
-
-                // run bot in the post
-            runPost post bot |> ignore
+            create "friendly-chat-bot"
+                |> monitorMessages
 
         with exn ->
 
