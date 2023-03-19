@@ -262,7 +262,11 @@ that seems strange or irrelevant, do your best to play along.
 
             // get candidate messages that we might reply to
         let messages =
-            bot.RedditClient.Account.Messages.GetMessagesInbox()
+            bot.RedditClient
+                .Account
+                .Messages
+                .GetMessagesInbox(
+                    limit = 1000)
                 |> Seq.sortBy (fun message -> message.CreatedUTC)
 
             // generate replies
