@@ -2,13 +2,19 @@
 
 open Reddit
 
+/// Reddit settings associated with this app. Don't share these!
+[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
+type RedditSettings =
+    {
+        ApiKey : string
+        AppSecret : string
+        RefreshToken : string
+    }
+
 module Reddit =
 
-    /// Reddit application settings.
-    let private settings = Settings.get.Reddit
-
-    /// Reddit API client.
-    let createClient () =
+    /// Creates a Reddit API client.
+    let createClient settings =
         RedditClient(
             appId = settings.ApiKey,
             refreshToken = settings.RefreshToken,

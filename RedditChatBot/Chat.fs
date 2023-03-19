@@ -5,6 +5,13 @@ open OpenAI.GPT3.Managers
 open OpenAI.GPT3.ObjectModels
 open OpenAI.GPT3.ObjectModels.RequestModels
 
+/// OpenAI settings associated with this app. Don't share these!
+[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
+type OpenAiSettings =
+    {
+        ApiKey : string
+    }
+
 /// Message roles.
 [<RequireQualifiedAccess>]
 type Role =
@@ -47,16 +54,13 @@ type ChatHistory = List<FChatMessage>
 
 module Chat =
 
-    /// Chat settings.
-    let private settings = Settings.get.OpenAi
-
-    /// Chat service.
-    let service =
+    /// Creates a chat client.
+    let createClient settings =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
 
     /// Gets a response to the given chat history.
-    let complete prompt (history : ChatHistory) =
+    let complete prompt (history : ChatHistory) (client : OpenAIService) =
 
             // build the request
         let req =
@@ -71,7 +75,7 @@ module Chat =
                 Model = Models.ChatGpt3_5Turbo)
 
             // wait for the response (single-threaded, no point in getting fancy)
-        let resp = service.ChatCompletion.CreateCompletion(req).Result
+        let resp = client.ChatCompletion.CreateCompletion(req).Result
         if resp.Successful then
             let choice = Seq.exactlyOne resp.Choices
             choice.Message.Content.Trim()                       // some responses start with whitespace - why?

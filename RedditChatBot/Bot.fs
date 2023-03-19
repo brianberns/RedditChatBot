@@ -3,16 +3,33 @@
 open System
 open System.Threading
 
+open Microsoft.Azure.WebJobs
+open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.Logging
+
 open Reddit
 open Reddit.Controllers
 
+open OpenAI.GPT3.Managers
+
+/// Application settings.
+[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
+type AppSettings =
+    {
+        Reddit : RedditSettings
+        OpenAi : OpenAiSettings
+    }
+
 type Bot =
     {
+        /// Bot's Reddit account name.
+        Name : string
+
         /// Reddit API client.
         RedditClient : RedditClient
 
-        /// Bot's Reddit user account.
-        User : User
+        /// Chat API client.
+        ChatClient : OpenAIService
 
         /// Maximum number of bot comments in a nested thread.
         MaxCommentDepth : int
@@ -22,26 +39,30 @@ type Bot =
 
         /// Time of the bot's most recent comment.
         LastCommentTime : DateTime
+
+        /// Logger.
+        Log : ILogger
     }
 
 module Bot =
 
     /// Creates a bot with the given user name.
-    let create name =
-        let client = Reddit.createClient ()                    // always create a fresh client, since Reddit occasionally invalidates existing one
+    let create name settings log =
         let minCommentDelay =
             TimeSpan(hours = 0, minutes = 5, seconds = 5)
         {
-            RedditClient = client
-            User = client.User(name : string)
+            Name = name
+            RedditClient = Reddit.createClient settings.Reddit
+            ChatClient = Chat.createClient settings.OpenAi
             MaxCommentDepth = 4
             MinCommentDelay = minCommentDelay
             LastCommentTime = DateTime.Now - minCommentDelay   // allow first comment immediately
+            Log = log
         }
 
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
-        if comment.Author = bot.User.Name then Role.Assistant
+        if comment.Author = bot.Name then Role.Assistant
         else Role.User
 
     /// Converts the given comment to a chat message based on its
@@ -93,7 +114,7 @@ module Bot =
 
     /// Completes the given history positively, using the given
     /// system-level prompt.
-    let private completePositive prompt history =
+    let private completePositive prompt history bot =
 
         let isNegative (text : string) =
             let text = text.ToLower()
@@ -103,7 +124,8 @@ module Bot =
                 || text.Contains("not appropriate")
 
         tryN 3 (fun () ->
-            let completion = Chat.complete prompt history
+            let completion =
+                Chat.complete prompt history bot.ChatClient
             let success = not (isNegative completion)
             success, completion)
 
@@ -141,8 +163,22 @@ inappropriate, reply with "Inappropriate". If the comment is strange
 or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         """
 
-    /// Parses the given assessment string.
-    let private parseAssessment (str : string) =
+    /// Assesses the given history.
+    let private assess (history : ChatHistory) bot =
+
+        let str =
+            let history' =
+                history
+                    |> Seq.where (fun msg -> msg.Role = Role.User)
+                    |> Seq.map (fun msg -> msg.Content)
+                    |> String.concat "\r\n"
+                    |> FChatMessage.create Role.User
+                    |> List.singleton
+            Chat.complete
+                assessmentPrompt
+                history'
+                bot.ChatClient
+
         let str = str.ToLower()
         if str.StartsWith("inappropriate") then
             Inappropriate
@@ -151,19 +187,8 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         elif str.StartsWith("normal") then
             Normal
         else
-            printfn $"Unexpected assessment: {str}"
+            bot.Log.LogWarning($"Unexpected assessment: {str}")
             Normal
-
-    /// Assesses the given history.
-    let private assess (history : ChatHistory) =
-        history
-            |> Seq.where (fun msg -> msg.Role = Role.User)
-            |> Seq.map (fun msg -> msg.Content)
-            |> String.concat "\r\n"
-            |> FChatMessage.create Role.User
-            |> List.singleton
-            |> Chat.complete assessmentPrompt
-            |> parseAssessment
 
     /// Reply prompt.
     let private replyPrompt =
@@ -179,14 +204,14 @@ that seems strange or irrelevant, do your best to play along.
         let timeout =
             nextCommentTime - DateTime.Now
         if timeout > TimeSpan.Zero then
-            printfn $"Sleeping until {nextCommentTime}"
+            bot.Log.LogInformation($"Sleeping until {nextCommentTime}")
             Thread.Sleep(timeout)
 
     /// Replies to the given comment, if necessary.
-    let private submitReply (comment : Comment) bot =
+    let private submitReplyRaw (comment : Comment) bot =
 
-            // ensure we have full details
-        assert(isNull comment.Body |> not)
+            // ensure we have full, current details
+        let comment = comment.Info()
 
             // don't reply to bot's own comments
         if getRole comment bot <> Role.Assistant
@@ -200,7 +225,7 @@ that seems strange or irrelevant, do your best to play along.
 
                 // if not, begin to create a reply
             if handled then
-                false, bot
+                bot
             else
                     // avoid deeply nested threads
                 let history = getHistory comment bot
@@ -212,59 +237,68 @@ that seems strange or irrelevant, do your best to play along.
                 if nBot < bot.MaxCommentDepth then
 
                         // assess input
-                    let assessment = assess history
+                    let assessment = assess history bot
 
                         // obtain chat completion
                     let completion =
                         if assessment = Inappropriate then
-                            completePositive replyPrompt history
+                            completePositive replyPrompt history bot
                         else
-                            Chat.complete replyPrompt history
+                            Chat.complete replyPrompt history bot.ChatClient
                     
                         // submit reply
                     delay bot
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
                         |> comment.Reply
                         |> ignore
-                    true, { bot with LastCommentTime = DateTime.Now }
+                    bot.Log.LogInformation("Comment submitted")
+                    { bot with LastCommentTime = DateTime.Now }
 
-                else false, bot
+                else bot
 
-        else false, bot
+        else bot
 
     /// Handles the given exception.
-    let private handleException (exn : exn) =
-
-        let dump (exn : exn) =
-            printfn ""
-            printfn $"{exn}"
-            printfn ""
+    let private handleException (exn : exn) bot =
 
         match exn with
             | :? AggregateException as aggExn ->
                 for innerExn in aggExn.InnerExceptions do
-                    dump innerExn
-            | _ -> dump exn
+                    bot.Log.LogError(innerExn, "Exception")
+            | _ -> bot.Log.LogError(exn, "Exception")
 
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
-    let private submitReplySafe comment bot =
+    let submitReply comment bot =
         tryN 3 (fun () ->
             try
-                true, submitReply comment bot
+                true, submitReplyRaw comment bot
             with exn ->
-                handleException exn
-                false, (false, bot))
+                handleException exn bot
+                false, bot)
 
-    /// Monitors and replies to incoming messages.
-    let rec monitorMessages bot =
+type BotTrigger(config : IConfiguration) =
+
+    [<FunctionName("MonitorUnreadMessages")>]
+    member _.MonitorUnreadMessages(
+        [<TimerTrigger("0 */5 * * * *")>]
+        timer : TimerInfo,
+        log : ILogger) =
+
+        log.LogInformation("Function triggered")
+        let bot =
+            let settings = config.Get<AppSettings>()
+            Bot.create "friendly-chat-bot" settings log
+        log.LogInformation("Bot initialized")
 
             // get candidate messages that we might reply to
         let messages =
             bot.RedditClient.Account.Messages
-                .GetMessagesInbox(limit = 1000)
+                .GetMessagesUnread(limit = 1000)
                 |> Seq.sortBy (fun message -> message.CreatedUTC)
+                |> Seq.toArray
+        log.LogInformation($"{messages.Length} unread messages found")
 
             // generate replies
         (bot, messages)
@@ -272,27 +306,7 @@ that seems strange or irrelevant, do your best to play along.
                 match Thing.getType message.Name with
                     | ThingType.Comment ->
                         let comment =
-                            bot.RedditClient
-                                .Comment(message.Name)
-                                .Info()
-                        let flag, bot' = submitReplySafe comment bot
-                        if flag then printfn "Reply submitted"
-                        bot'
+                            bot.RedditClient.Comment(message.Name)
+                        Bot.submitReply comment bot
                     | _ -> bot)
-            |> monitorMessages
-
-    /// Runs a bot.
-    let rec run () =
-
-        try
-            create "friendly-chat-bot"
-                |> monitorMessages
-
-        with exn ->
-
-            handleException exn
-
-            printfn ""
-            printfn "*** Restarting ***"
-            printfn ""
-            run ()   // restart from scratch
+            |> ignore
