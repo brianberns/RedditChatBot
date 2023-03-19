@@ -41,7 +41,7 @@ module Bot =
 
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
-        if comment.Author = bot.User.Name then Role.System
+        if comment.Author = bot.User.Name then Role.Assistant
         else Role.User
 
     /// Converts the given comment to a chat message based on its
@@ -91,14 +91,6 @@ module Bot =
             tryN (numTries - 1) f
         else value
 
-    /// Completes the given history using the given system-level
-    /// prompt.
-    let private complete prompt (history : ChatHistory) =
-        Chat.complete [
-            yield FChatMessage.create Role.System prompt
-            yield! history
-        ]
-
     /// Completes the given history positively, using the given
     /// system-level prompt.
     let private completePositive prompt history =
@@ -111,7 +103,7 @@ module Bot =
                 || text.Contains("not appropriate")
 
         tryN 3 (fun () ->
-            let completion = complete prompt history
+            let completion = Chat.complete prompt history
             let success = not (isNegative completion)
             success, completion)
 
@@ -164,15 +156,14 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
 
     /// Assesses the given history.
     let private assess (history : ChatHistory) =
-        let content =
-            history
-                |> Seq.where (fun msg -> msg.Role = Role.User)
-                |> Seq.map (fun msg -> msg.Content)
-                |> String.concat "\r\n"
-        Chat.complete [
-            FChatMessage.create Role.System assessmentPrompt
-            FChatMessage.create Role.User content
-        ] |> parseAssessment
+        history
+            |> Seq.where (fun msg -> msg.Role = Role.User)
+            |> Seq.map (fun msg -> msg.Content)
+            |> String.concat "\r\n"
+            |> FChatMessage.create Role.User
+            |> List.singleton
+            |> Chat.complete assessmentPrompt
+            |> parseAssessment
 
     /// Reply prompt.
     let private replyPrompt =
@@ -198,14 +189,14 @@ that seems strange or irrelevant, do your best to play along.
         assert(isNull comment.Body |> not)
 
             // don't reply to bot's own comments
-        if getRole comment bot <> Role.System
+        if getRole comment bot <> Role.Assistant
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
                 // has bot already replied to this comment?
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
-                        getRole child bot = Role.System)
+                        getRole child bot = Role.Assistant)
 
                 // if not, begin to create a reply
             if handled then
@@ -216,7 +207,7 @@ that seems strange or irrelevant, do your best to play along.
                 let nBot =
                     history
                         |> Seq.where (fun msg ->
-                            msg.Role = Role.System)
+                            msg.Role = Role.Assistant)
                         |> Seq.length
                 if nBot < bot.MaxCommentDepth then
 
@@ -228,7 +219,7 @@ that seems strange or irrelevant, do your best to play along.
                         if assessment = Inappropriate then
                             completePositive replyPrompt history
                         else
-                            complete replyPrompt history
+                            Chat.complete replyPrompt history
                     
                         // submit reply
                     delay bot

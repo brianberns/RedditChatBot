@@ -9,9 +9,6 @@ open OpenAI.GPT3.ObjectModels.RequestModels
 [<RequireQualifiedAccess>]
 type Role =
 
-    /// System-level instruction.
-    | System
-
     /// User query.
     | User
 
@@ -41,7 +38,6 @@ module FChatMessage =
     let toNative msg =
         let create =
             match msg.Role with
-                | Role.System -> ChatMessage.FromSystem
                 | Role.User -> ChatMessage.FromUser
                 | Role.Assistant -> ChatMessage.FromAssistant
         create msg.Content
@@ -60,16 +56,18 @@ module Chat =
             |> OpenAIService
 
     /// Gets a response to the given chat history.
-    let complete (history : ChatHistory) =
+    let complete prompt (history : ChatHistory) =
 
             // build the request
         let req =
-            let msgs =
-                history
-                    |> Seq.map FChatMessage.toNative
-                    |> Seq.toArray
+            let messages =
+                [|
+                    ChatMessage.FromSystem prompt
+                    for msg in history do
+                        FChatMessage.toNative msg
+                |]
             ChatCompletionCreateRequest(
-                Messages = msgs,
+                Messages = messages,
                 Model = Models.ChatGpt3_5Turbo)
 
             // wait for the response (single-threaded, no point in getting fancy)
