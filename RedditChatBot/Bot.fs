@@ -208,7 +208,7 @@ that seems strange or irrelevant, do your best to play along.
             Thread.Sleep(timeout)
 
     /// Replies to the given comment, if necessary.
-    let private submitReplyRaw (comment : Comment) bot =
+    let private submitReply (comment : Comment) bot =
 
             // ensure we have full, current details
         let comment = comment.Info()
@@ -270,13 +270,13 @@ that seems strange or irrelevant, do your best to play along.
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
-    let submitReply comment bot =
+    let trySubmitReply comment bot =
         tryN 3 (fun () ->
             try
-                true, (true, submitReplyRaw comment bot)
+                true, Some (submitReply comment bot)
             with exn ->
                 handleException exn bot
-                false, (false, bot))
+                false, None)
 
     /// Runs the given bot.
     let run bot =
@@ -296,11 +296,12 @@ that seems strange or irrelevant, do your best to play along.
                     | ThingType.Comment ->
                         let comment =
                             bot.RedditClient.Comment(message.Name)
-                        let flag, bot' = submitReply comment bot
-                        if flag then
-                            bot'.RedditClient.Account.Messages
-                                .ReadMessage(message.Name)
-                        bot'
+                        match trySubmitReply comment bot with
+                            | Some bot' ->
+                                bot'.RedditClient.Account.Messages
+                                    .ReadMessage(message.Name)
+                                bot'
+                            | None -> bot
                     | _ -> bot)
 
 /// Azure function trigger.
