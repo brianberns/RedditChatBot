@@ -273,10 +273,10 @@ that seems strange or irrelevant, do your best to play along.
     let submitReply comment bot =
         tryN 3 (fun () ->
             try
-                true, submitReplyRaw comment bot
+                true, (true, submitReplyRaw comment bot)
             with exn ->
                 handleException exn bot
-                false, bot)
+                false, (false, bot))
 
 type BotTrigger(config : IConfiguration) =
 
@@ -307,6 +307,10 @@ type BotTrigger(config : IConfiguration) =
                     | ThingType.Comment ->
                         let comment =
                             bot.RedditClient.Comment(message.Name)
-                        Bot.submitReply comment bot
+                        let flag, bot' = Bot.submitReply comment bot
+                        if flag then
+                            bot'.RedditClient.Account.Messages
+                                .ReadMessage(message.Fullname)
+                        bot'
                     | _ -> bot)
             |> ignore
