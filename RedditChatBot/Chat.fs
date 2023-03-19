@@ -76,9 +76,8 @@ module Chat =
         let resp = service.ChatCompletion.CreateCompletion(req).Result
         if resp.Successful then
             let choice = Seq.exactlyOne resp.Choices
-            choice.Message.Content.Trim()   // some responses start with whitespace - why?
+            choice.Message.Content.Trim()                       // some responses start with whitespace - why?
+        elif resp.Error.Code = "context_length_exceeded" then   // e.g. "This model's maximum context length is 4097 tokens. However, your messages resulted in 4174 tokens. Please reduce the length of the messages."
+            "Sorry, we've exceeded ChatGPT's maximum context length. Please start a new thread."
         else
-            if resp.Error.Code = "context_length_exceeded" then   // e.g. "This model's maximum context length is 4097 tokens. However, your messages resulted in 4174 tokens. Please reduce the length of the messages."
-                "Error: Maximum context length exceeded. Please start a new thread."
-            else
-                failwith $"{resp.Error.Message}"
+            failwith $"{resp.Error.Message}"
