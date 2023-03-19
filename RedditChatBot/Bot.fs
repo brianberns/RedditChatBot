@@ -143,10 +143,10 @@ module Bot =
     /// Assessment prompt.
     let private assessmentPrompt =
         fixPrompt """
-You are a friendly Reddit user. Assess the given comment, and reply
-with a single word. If the comment is disrespectful or inappropriate,
-reply with "Inappropriate". If the comment is strange or irrelevant,
-reply with "Strange". Otherwise, reply with "Normal".
+Your job is to assess a comment posted to Reddit. Your reply must consist
+of a single word, no more or less. If the comment is disrespectful or
+inappropriate, reply with "Inappropriate". If the comment is strange or
+irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         """
 
     /// Parses the given assessment string.
