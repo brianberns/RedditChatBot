@@ -287,7 +287,7 @@ that seems strange or irrelevant, do your best to play along.
                 .GetMessagesUnread(limit = 1000)
                 |> Seq.sortBy (fun message -> message.CreatedUTC)
                 |> Seq.toArray
-        bot.Log.LogInformation($"{messages.Length} unread messages found")
+        bot.Log.LogInformation($"{messages.Length} unread message(s) found")
 
             // generate replies
         (bot, messages)
