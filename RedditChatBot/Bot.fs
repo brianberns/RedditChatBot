@@ -207,6 +207,12 @@ that seems strange or irrelevant, do your best to play along.
             bot.Log.LogInformation($"Sleeping until {nextCommentTime}")
             Thread.Sleep(timeout)
 
+    [<RequireQualifiedAccess>]
+    type private CommentResult =
+        | Replied
+        | Ignored
+        | Error
+
     /// Replies to the given comment, if necessary.
     let private submitReply (comment : Comment) bot =
 
@@ -224,7 +230,7 @@ that seems strange or irrelevant, do your best to play along.
                         getRole child bot = Role.Assistant)
 
                 // if not, begin to create a reply
-            if handled then false
+            if handled then CommentResult.Ignored
             else
                     // avoid deeply nested threads
                 let history = getHistory comment bot
@@ -251,11 +257,11 @@ that seems strange or irrelevant, do your best to play along.
                         |> comment.Reply
                         |> ignore
                     bot.Log.LogInformation("Comment submitted")
-                    true
+                    CommentResult.Replied
 
-                else false
+                else CommentResult.Ignored
 
-        else false
+        else CommentResult.Ignored
 
     /// Handles the given exception.
     let private handleException (exn : exn) bot =
@@ -269,13 +275,13 @@ that seems strange or irrelevant, do your best to play along.
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
-    let submitReplySafe comment bot =
+    let private submitReplySafe comment bot =
         tryN 3 (fun () ->
             try
                 true, submitReply comment bot
             with exn ->
                 handleException exn bot
-                false, false)
+                false, CommentResult.Error)
 
     /// Runs the given bot.
     let run bot =
@@ -293,13 +299,20 @@ that seems strange or irrelevant, do your best to play along.
             |> Seq.tryFind (fun message ->
                 match Thing.getType message.Name with
                     | ThingType.Comment ->
+
+                            // attempt to reply to message
                         let comment =
                             bot.RedditClient.Comment(message.Name)
-                        submitReplySafe comment bot
+                        let result = submitReplySafe comment bot
+
+                            // mark message read?
+                        if result <> CommentResult.Error then
+                            bot.RedditClient.Account.Messages
+                                .ReadMessage(message.Name)
+
+                            // stop looking?
+                        result = CommentResult.Replied
                     | _ -> false)
-            |> Option.iter (fun message ->
-                bot.RedditClient.Account.Messages
-                    .ReadMessage(message.Name))
 
 /// Azure function trigger.
 type BotTrigger(config : IConfiguration) =
@@ -307,7 +320,7 @@ type BotTrigger(config : IConfiguration) =
     /// Runs the bot.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.Run(
-        [<TimerTrigger("0 * * * * *")>]   // at second 0 of every minute
+        [<TimerTrigger("0 * * * * *")>]   // every minute at second 0
         timer : TimerInfo,
         log : ILogger) =
 
