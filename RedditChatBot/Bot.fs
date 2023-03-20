@@ -106,11 +106,17 @@ module Bot =
 
     /// Runs the given function repeatedly until it succeeds or
     /// we run out of tries.
-    let rec private tryN numTries f =
-        let success, value = f ()
-        if not success && numTries > 1 then
-            tryN (numTries - 1) f
-        else value
+    let private tryN numTries f =
+
+        let rec loop numTriesRemaining =
+            let success, value =
+                let iTry = numTries - numTriesRemaining
+                f iTry
+            if not success && numTriesRemaining > 1 then
+                loop (numTriesRemaining - 1)
+            else value
+
+        loop numTries
 
     /// Completes the given history positively, using the given
     /// system-level prompt.
@@ -123,7 +129,7 @@ module Bot =
                 || text.Contains("inappropriate")
                 || text.Contains("not appropriate")
 
-        tryN 3 (fun () ->
+        tryN 3 (fun _ ->
             let completion =
                 Chat.complete prompt history bot.ChatClient
             let success = not (isNegative completion)
@@ -282,10 +288,12 @@ that seems strange or irrelevant, do your best to play along.
 
     /// Replies safely to the given comment, if necessary.
     let private submitReplySafe comment bot =
-        tryN 3 (fun () ->
+        let numTries = 3
+        tryN numTries (fun iTry ->
             try
                 true, submitReply comment bot
             with exn ->
+                bot.Log.LogError($"Error on reply attempt #{iTry+1} of {numTries}")
                 handleException exn bot
                 false, CommentResult.Error)
 
