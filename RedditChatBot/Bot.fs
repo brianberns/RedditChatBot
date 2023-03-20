@@ -224,8 +224,7 @@ that seems strange or irrelevant, do your best to play along.
                         getRole child bot = Role.Assistant)
 
                 // if not, begin to create a reply
-            if handled then
-                bot
+            if handled then false
             else
                     // avoid deeply nested threads
                 let history = getHistory comment bot
@@ -252,11 +251,11 @@ that seems strange or irrelevant, do your best to play along.
                         |> comment.Reply
                         |> ignore
                     bot.Log.LogInformation("Comment submitted")
-                    { bot with LastCommentTime = DateTime.Now }
+                    true
 
-                else bot
+                else false
 
-        else bot
+        else false
 
     /// Handles the given exception.
     let private handleException (exn : exn) bot =
@@ -270,13 +269,13 @@ that seems strange or irrelevant, do your best to play along.
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
-    let trySubmitReply comment bot =
+    let submitReplySafe comment bot =
         tryN 3 (fun () ->
             try
-                true, Some (submitReply comment bot)
+                true, submitReply comment bot
             with exn ->
                 handleException exn bot
-                false, None)
+                false, false)
 
     /// Runs the given bot.
     let run bot =
@@ -285,24 +284,22 @@ that seems strange or irrelevant, do your best to play along.
         let messages =
             bot.RedditClient.Account.Messages
                 .GetMessagesUnread(limit = 1000)
-                |> Seq.sortBy (fun message -> message.CreatedUTC)
+                |> Seq.sortBy (fun message -> message.CreatedUTC)   // oldest messages first
                 |> Seq.toArray
         bot.Log.LogInformation($"{messages.Length} unread message(s) found")
 
-            // generate replies
-        (bot, messages)
-            ||> Seq.fold (fun bot message ->
+            // reply to no more than one message
+        messages
+            |> Seq.tryFind (fun message ->
                 match Thing.getType message.Name with
                     | ThingType.Comment ->
                         let comment =
                             bot.RedditClient.Comment(message.Name)
-                        match trySubmitReply comment bot with
-                            | Some bot' ->
-                                bot'.RedditClient.Account.Messages
-                                    .ReadMessage(message.Name)
-                                bot'
-                            | None -> bot
-                    | _ -> bot)
+                        submitReplySafe comment bot
+                    | _ -> false)
+            |> Option.iter (fun message ->
+                bot.RedditClient.Account.Messages
+                    .ReadMessage(message.Name))
 
 /// Azure function trigger.
 type BotTrigger(config : IConfiguration) =
@@ -310,7 +307,7 @@ type BotTrigger(config : IConfiguration) =
     /// Runs the bot.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.Run(
-        [<TimerTrigger("0 */5 * * * *")>]   // at second 0 of every 5th minute of every hour of each day
+        [<TimerTrigger("0 * * * * *")>]   // at second 0 of every minute
         timer : TimerInfo,
         log : ILogger) =
 
