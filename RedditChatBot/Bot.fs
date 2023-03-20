@@ -264,14 +264,20 @@ that seems strange or irrelevant, do your best to play along.
         else CommentResult.Ignored
 
     /// Handles the given exception.
-    let private handleException (exn : exn) bot =
+    let private handleException exn bot =
 
-        match exn with
-            | :? AggregateException as aggExn ->
-                for innerExn in aggExn.InnerExceptions do
-                    bot.Log.LogError(innerExn, innerExn.Message)
-            | _ -> bot.Log.LogError(exn, exn.Message)
+        let rec loop (exn : exn) =
+            match exn with
+                | :? AggregateException as aggExn ->
+                    for innerExn in aggExn.InnerExceptions do
+                        loop innerExn
+                | _ ->
+                    if isNull exn.InnerException then
+                        bot.Log.LogError(exn, exn.Message)
+                    else
+                        loop exn.InnerException
 
+        loop exn
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
     /// Replies safely to the given comment, if necessary.
