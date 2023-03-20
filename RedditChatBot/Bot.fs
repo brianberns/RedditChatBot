@@ -16,7 +16,10 @@ open OpenAI.GPT3.Managers
 [<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
 type AppSettings =
     {
+        /// Reddit settings.
         Reddit : RedditSettings
+
+        /// OpenAI settings.
         OpenAi : OpenAiSettings
     }
 
@@ -210,13 +213,21 @@ that seems strange or irrelevant, do your best to play along.
         let timeout =
             nextCommentTime - DateTime.Now
         if timeout > TimeSpan.Zero then
-            bot.Log.LogInformation($"Sleeping until {nextCommentTime}")
+            bot.Log.LogInformation(
+                $"Sleeping until {nextCommentTime}")
             Thread.Sleep(timeout)
 
+    /// Result of attempting submitting a reply comment.
     [<RequireQualifiedAccess>]
     type private CommentResult =
+
+        /// Reply submitted successfully.
         | Replied
+
+        /// No need to reply.
         | Ignored
+
+        /// Error while attempting to submit a reply.
         | Error
 
     /// Replies to the given comment, if necessary.
