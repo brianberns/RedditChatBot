@@ -269,8 +269,8 @@ that seems strange or irrelevant, do your best to play along.
         match exn with
             | :? AggregateException as aggExn ->
                 for innerExn in aggExn.InnerExceptions do
-                    bot.Log.LogError(innerExn, "Exception")
-            | _ -> bot.Log.LogError(exn, "Exception")
+                    bot.Log.LogError(innerExn, innerExn.Message)
+            | _ -> bot.Log.LogError(exn, exn.Message)
 
         Thread.Sleep(10000)   // wait for problem to clear up, hopefully
 
