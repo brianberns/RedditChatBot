@@ -7,6 +7,13 @@ open Microsoft.Extensions.Logging
 /// Azure function trigger.
 type BotTrigger(config : IConfiguration) =
 
+    /// Reply prompt.
+    let replyPrompt =
+        """
+You are a friendly Reddit user. If you receive a comment
+that seems strange or irrelevant, do your best to play along.
+        """
+
     /// Runs the bot.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.Run(
@@ -20,4 +27,5 @@ type BotTrigger(config : IConfiguration) =
                 "friendly-chat-bot"
                 "1.0"
                 "brianberns"
+                replyPrompt
         Bot.monitorUnreadMessages settings botDesc log

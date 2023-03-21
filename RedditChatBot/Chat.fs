@@ -59,6 +59,13 @@ module Chat =
         OpenAiOptions(ApiKey = settings.ApiKey)
             |> OpenAIService
 
+    /// Fixes prompt whitespace.
+    let fixPrompt (prompt : string) =
+        prompt
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
+
     /// Gets a response to the given chat history.
     let complete prompt (history : ChatHistory) (client : OpenAIService) =
 

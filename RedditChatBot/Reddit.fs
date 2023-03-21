@@ -2,6 +2,38 @@
 
 open Reddit
 
+/// Reddit bot description.
+type BotDescription =
+    {
+        /// Bot's Reddit account name.
+        BotName : string
+
+        /// Bot version. E.g. "1.0".
+        Version : string
+
+        /// Author's Reddit account name.
+        AuthorName : string
+
+        /// Prompt used to generate reply comments.
+        ReplyPrompt : string
+    }
+
+module BotDescription =
+
+    /// Creates a bot description.
+    let create botName version authorName replyPrompt =
+        {
+            BotName = botName
+            Version = version
+            AuthorName = authorName
+            ReplyPrompt = Chat.fixPrompt replyPrompt
+        }
+
+    /// Bot's user agent string, in format suggested by Reddit (more
+    /// or less).
+    let toUserAgent botDesc =
+        $"{botDesc.BotName}:v{botDesc.Version} (by /u/{botDesc.AuthorName})"
+
 (*
  * To create a Reddit bot:
  *
@@ -26,34 +58,6 @@ type RedditSettings =
         /// App authentication refresh token.
         RefreshToken : string
     }
-
-/// Reddit bot description.
-type BotDescription =
-    {
-        /// Bot's Reddit account name.
-        BotName : string
-
-        /// Bot version. E.g. "1.0".
-        Version : string
-
-        /// Author's Reddit account name.
-        AuthorName : string
-    }
-
-module BotDescription =
-
-    /// Creates a bot description.
-    let create botName version authorName =
-        {
-            BotName = botName
-            Version = version
-            AuthorName = authorName
-        }
-
-    /// Bot's user agent string, in format suggested by Reddit (more
-    /// or less).
-    let toUserAgent botDesc =
-        $"{botDesc.BotName}:v{botDesc.Version} (by /u/{botDesc.AuthorName})"
 
 module Reddit =
 

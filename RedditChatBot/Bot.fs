@@ -120,9 +120,8 @@ module Bot =
 
         loop numTries
 
-    /// Completes the given history positively, using the given
-    /// system-level prompt.
-    let private completePositive prompt history bot =
+    /// Completes the given history positively.
+    let private completePositive history bot =
 
         let isNegative (text : string) =
             let text = text.ToLower()
@@ -133,7 +132,10 @@ module Bot =
 
         tryN 3 (fun _ ->
             let completion =
-                Chat.complete prompt history bot.ChatClient
+                Chat.complete
+                    bot.Description.ReplyPrompt
+                    history
+                    bot.ChatClient
             let success = not (isNegative completion)
             success, completion)
 
@@ -149,13 +151,6 @@ module Bot =
      *   replies.
      *)
 
-    /// Fixes prompt whitespace.
-    let private fixPrompt (prompt : string) =
-        prompt
-            .Replace("\r", "")
-            .Replace("\n", " ")
-            .Trim()
-
     /// Bot's assessment of a user comment.
     type private Assessment =
         | Normal
@@ -164,7 +159,7 @@ module Bot =
 
     /// Assessment prompt.
     let private assessmentPrompt =
-        fixPrompt """
+        Chat.fixPrompt """
 You are a friendly Reddit user. Assess the following comment, and
 reply with a single word. If the comment is disrespectful or
 inappropriate, reply with "Inappropriate". If the comment is strange
@@ -197,13 +192,6 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         else
             bot.Log.LogWarning($"Unexpected assessment: {str}")
             Normal
-
-    /// Reply prompt.
-    let private replyPrompt =
-        fixPrompt """
-You are a friendly Reddit user. If you receive a comment
-that seems strange or irrelevant, do your best to play along.
-        """
 
     /// Delays the given bot, if necessary.
     let private delay bot =
@@ -263,9 +251,12 @@ that seems strange or irrelevant, do your best to play along.
                         // obtain chat completion
                     let completion =
                         if assessment = Inappropriate then
-                            completePositive replyPrompt history bot
+                            completePositive history bot
                         else
-                            Chat.complete replyPrompt history bot.ChatClient
+                            Chat.complete
+                                bot.Description.ReplyPrompt
+                                history
+                                bot.ChatClient
                     
                         // submit reply
                     delay bot
