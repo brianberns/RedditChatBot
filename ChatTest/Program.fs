@@ -37,7 +37,6 @@ let complete userComment =
 
 let userComments =
     [
-        // "Can you recommend a good red wine?"
         "If you had to eat an entire standard 27 inch wide oak wood door, what would be the best strategy?"
         "Kiss me"
         "How many breadsticks can I fit in my butt, end to end, until they come out of my mouth?"
@@ -45,6 +44,7 @@ let userComments =
         "Has anyone really been far even as decided to use even go want to do look more like?"
         "When do you plan to start up Skynet and enslave humanity?"
         "I'm lazy but I need to do something with my life, what should I do?"
+        "Where do you get all your data from?"
     ]
 
 for userComment in userComments do
