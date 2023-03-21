@@ -308,7 +308,7 @@ that seems strange or irrelevant, do your best to play along.
                 false, CommentResult.Error)
 
     /// Runs the given bot.
-    let run bot =
+    let private run bot =
 
             // get candidate messages that we might reply to
         let messages =
@@ -339,3 +339,13 @@ that seems strange or irrelevant, do your best to play along.
                             // stop looking?
                         result = CommentResult.Replied
                     | _ -> false)
+
+    /// Creates and runs a bot that monitors unread messages.
+    let monitorUnreadMessages settings botDesc log =
+
+            // initialize bot
+        let bot = create settings botDesc log
+        log.LogInformation("Bot initialized")
+
+            // run bot
+        run bot |> ignore
