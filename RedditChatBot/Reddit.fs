@@ -68,8 +68,14 @@ module Reddit =
 /// Type of a reddit thing.
 [<RequireQualifiedAccess>]
 type ThingType =
+
+    /// A post (aka "link").
     | Post
+
+    /// A comment.
     | Comment
+
+    /// Some other thing.
     | Other
 
 module Thing =
