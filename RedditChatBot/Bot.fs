@@ -57,7 +57,7 @@ module Bot =
             MaxCommentDepth = 4
             MinCommentDelay =
                 TimeSpan(hours = 0, minutes = 5, seconds = 5)
-            LastCommentTime = DateTime.Now
+            LastCommentTime = DateTime.Now   // to-do: obtain actual last comment time from Reddit API
             Log = log
         }
 
