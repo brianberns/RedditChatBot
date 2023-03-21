@@ -7,6 +7,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "RedditChatBot", "RedditChat
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FriendlyChatBot", "FriendlyChatBot\FriendlyChatBot.fsproj", "{C9B0A221-A9F4-42F3-8B3A-12C42FB43B9A}"
 EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TypicalChatBot", "TypicalChatBot\TypicalChatBot.fsproj", "{699575DF-077C-40EE-8554-76D3D73D1B9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C9B0A221-A9F4-42F3-8B3A-12C42FB43B9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9B0A221-A9F4-42F3-8B3A-12C42FB43B9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9B0A221-A9F4-42F3-8B3A-12C42FB43B9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{699575DF-077C-40EE-8554-76D3D73D1B9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{699575DF-077C-40EE-8554-76D3D73D1B9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{699575DF-077C-40EE-8554-76D3D73D1B9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{699575DF-077C-40EE-8554-76D3D73D1B9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
