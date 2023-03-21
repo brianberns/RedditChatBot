@@ -5,7 +5,7 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
 /// Azure function type for dependency injection.
-type FriendlyChatBot(config : IConfiguration) =
+type TypicalChatBot(config : IConfiguration) =
 
     /// Reply prompt.
     let replyPrompt =
