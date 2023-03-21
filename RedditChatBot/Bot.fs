@@ -314,25 +314,27 @@ that seems strange or irrelevant, do your best to play along.
         let messages =
             bot.RedditClient.Account.Messages
                 .GetMessagesUnread(limit = 1000)
-                |> Seq.sortBy (fun message -> message.CreatedUTC)   // oldest messages first
+                |> Seq.sortBy (fun message ->
+                    message.CreatedUTC)   // oldest messages first
                 |> Seq.toArray
         bot.Log.LogInformation($"{messages.Length} unread message(s) found")
 
             // reply to no more than one message
         messages
-            |> Seq.tryFind (fun message ->
-                match Thing.getType message.Name with
+            |> Seq.map (fun message -> message.Name)   // fullname of the thing the message is about
+            |> Seq.tryFind (fun fullname ->
+                match Thing.getType fullname with
                     | ThingType.Comment ->
 
                             // attempt to reply to message
                         let comment =
-                            bot.RedditClient.Comment(message.Name)
+                            bot.RedditClient.Comment(fullname)
                         let result = submitReplySafe comment bot
 
                             // mark message read?
                         if result <> CommentResult.Error then
                             bot.RedditClient.Account.Messages
-                                .ReadMessage(message.Name)
+                                .ReadMessage(fullname)   // this is weird, but apparently correct
 
                             // stop looking?
                         result = CommentResult.Replied
