@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.0" />
+    <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="5.2.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.3" />
