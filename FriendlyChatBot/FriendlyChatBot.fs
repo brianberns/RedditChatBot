@@ -4,8 +4,8 @@ open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
-/// Azure function trigger.
-type BotTrigger(config : IConfiguration) =
+/// Azure function type for dependency injection.
+type FriendlyChatBot(config : IConfiguration) =
 
     /// Reply prompt.
     let replyPrompt =

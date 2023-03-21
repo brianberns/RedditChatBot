@@ -5,7 +5,10 @@ open System
 open Microsoft.Azure.Functions.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 
-/// Azure functions statup type.
+(* https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-azure-functions-csharp *)
+
+/// Incorporates the Azure app configuration service into our Azure
+/// functions app.
 type Startup() =
     inherit FunctionsStartup()
 

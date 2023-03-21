@@ -13,7 +13,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
-    <Compile Include="BotTrigger.fs" />
+    <Compile Include="FriendlyChatBot.fs" />
   </ItemGroup>
 
   <ItemGroup>
