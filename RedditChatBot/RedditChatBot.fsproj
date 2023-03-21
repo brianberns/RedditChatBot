@@ -6,14 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="host.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="local.settings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </Content>
-    <Compile Include="Startup.fs" />
     <Compile Include="Reddit.fs" />
     <Compile Include="Chat.fs" />
     <Compile Include="Bot.fs" />
@@ -21,9 +13,6 @@
 
   <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.8.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="5.2.0" />
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.3" />
     <PackageReference Include="Reddit" Version="1.5.2" />
   </ItemGroup>
 

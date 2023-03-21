@@ -3,8 +3,6 @@
 open System
 open System.Threading
 
-open Microsoft.Azure.WebJobs
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
 open Reddit
@@ -25,8 +23,8 @@ type AppSettings =
 
 type Bot =
     {
-        /// Bot's Reddit account name.
-        Name : string
+        /// Bot description.
+        Description : BotDescription
 
         /// Reddit API client.
         RedditClient : RedditClient
@@ -50,22 +48,23 @@ type Bot =
 module Bot =
 
     /// Creates a bot with the given user name.
-    let create name settings log =
-        let minCommentDelay =
-            TimeSpan(hours = 0, minutes = 5, seconds = 5)
+    let create settings botDesc log =
         {
-            Name = name
-            RedditClient = Reddit.createClient settings.Reddit
+            Description = botDesc
+            RedditClient =
+                Reddit.createClient settings.Reddit botDesc
             ChatClient = Chat.createClient settings.OpenAi
             MaxCommentDepth = 4
-            MinCommentDelay = minCommentDelay
+            MinCommentDelay =
+                TimeSpan(hours = 0, minutes = 5, seconds = 5)
             LastCommentTime = DateTime.Now
             Log = log
         }
 
     /// Determines the role of the given comment's author.
     let private getRole (comment : Comment) bot =
-        if comment.Author = bot.Name then Role.Assistant
+        if comment.Author = bot.Description.BotName then
+            Role.Assistant
         else Role.User
 
     /// Converts the given comment to a chat message based on its
@@ -338,22 +337,3 @@ that seems strange or irrelevant, do your best to play along.
                             // stop looking?
                         result = CommentResult.Replied
                     | _ -> false)
-
-/// Azure function trigger.
-type BotTrigger(config : IConfiguration) =
-
-    /// Runs the bot.
-    [<FunctionName("MonitorUnreadMessages")>]
-    member _.Run(
-        [<TimerTrigger("0 * * * * *")>]   // every minute at second 0
-        timer : TimerInfo,
-        log : ILogger) =
-
-            // initialize bot
-        let bot =
-            let settings = config.Get<AppSettings>()
-            Bot.create "friendly-chat-bot" settings log
-        log.LogInformation("Bot initialized")
-
-            // run bot
-        Bot.run bot |> ignore
