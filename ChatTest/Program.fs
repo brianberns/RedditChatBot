@@ -2,15 +2,17 @@
 open Microsoft.Extensions.Configuration
 open RedditChatBot
 
-let settings =
-    let builder = ConfigurationBuilder()
-    let cs = Environment.GetEnvironmentVariable("ConnectionString")
-    builder
-        .AddAzureAppConfiguration(cs)
-        .Build()
-        .Get<AppSettings>()
+let chatClient =
 
-let chatClient = Chat.createClient settings.OpenAi
+    let settings =
+        let cs =
+            Environment.GetEnvironmentVariable("ConnectionString")
+        ConfigurationBuilder()
+            .AddAzureAppConfiguration(cs)
+            .Build()
+            .Get<AppSettings>()
+
+    Chat.createClient settings.OpenAi
 
 let replyPrompt =
     Chat.fixPrompt """
