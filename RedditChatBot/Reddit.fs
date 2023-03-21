@@ -2,6 +2,17 @@
 
 open Reddit
 
+(*
+ * To create a Reddit bot:
+ *
+ * - Use https://ssl.reddit.com/prefs/apps/ to create app ID and
+ *   secret.
+ *
+ * - Use https://not-an-aardvark.github.io/reddit-oauth-helper/
+ *   to create refresh token. Choose desired scopes and make
+ *   permanent.
+ *)
+
 /// Reddit settings associated with this app. Don't share these!
 [<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
 type RedditSettings =
