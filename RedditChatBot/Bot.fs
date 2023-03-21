@@ -21,6 +21,7 @@ type AppSettings =
         OpenAi : OpenAiSettings
     }
 
+/// A Reddit chat bot.
 type Bot =
     {
         /// Bot description.
@@ -49,32 +50,56 @@ module Bot =
 
     /// Creates a bot with the given user name.
     let create settings botDesc log =
+
+            // connect to Reddit
+        let redditClient =
+                Reddit.createClient settings.Reddit botDesc
+
+            // connect to chat service
+        let chatClient = 
+            Chat.createClient settings.OpenAi
+
+        let minCommentDelay =
+#if DEBUG
+            TimeSpan.Zero
+#else
+            TimeSpan(hours = 0, minutes = 5, seconds = 5)
+#endif
+
         {
             Description = botDesc
-            RedditClient =
-                Reddit.createClient settings.Reddit botDesc
-            ChatClient = Chat.createClient settings.OpenAi
+            RedditClient = redditClient
+            ChatClient = chatClient
             MaxCommentDepth = 4
-            MinCommentDelay =
-                TimeSpan(hours = 0, minutes = 5, seconds = 5)
+            MinCommentDelay = minCommentDelay
             LastCommentTime = DateTime.Now   // to-do: obtain actual last comment time from Reddit API
             Log = log
         }
 
-    /// Determines the role of the given comment's author.
-    let private getRole (comment : Comment) bot =
-        if comment.Author = bot.Description.BotName then
+    /// Determines the role of the given author.
+    let private getRole author bot =
+        if author = bot.Description.BotName then
             Role.Assistant
         else Role.User
 
-    /// Converts the given comment to a chat message based on its
+    /// Does the given text contain any content?
+    let private hasContent =
+        String.IsNullOrWhiteSpace >> not
+
+    /// Says the given text as the given author.
+    let private say author text =
+        assert(hasContent author)
+        assert(hasContent text)
+        $"{author} says {text}"
+
+    /// Converts the given text to a chat message based on its
     /// author's role.
-    let private createChatMessage comment bot =
-        let role = getRole comment bot
+    let private createChatMessage author text bot =
+        let role = getRole author bot
         let content =
             match role with
-                | Role.User -> $"{comment.Author} says {comment.Body}"
-                | _ -> comment.Body
+                | Role.User -> say author text
+                | _ -> text
         FChatMessage.create role content
 
     (*
@@ -84,6 +109,15 @@ module Bot =
      * (Unfortunately, Comment.About() seems to have a race condition.)
      *)
 
+    /// Converts the given post's content into a history.
+    let private getPostHistory (post : SelfPost) bot =
+        let post = post.About()
+        [
+            createChatMessage post.Author post.Title bot
+            if hasContent post.SelfText then
+                createChatMessage post.Author post.SelfText bot
+        ]
+
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
 
@@ -91,15 +125,25 @@ module Bot =
             let comment = comment.Info()
             [
                     // this comment
-                yield createChatMessage comment bot
+                yield createChatMessage
+                    comment.Author comment.Body bot
 
                     // ancestors
                 match Thing.getType comment.ParentFullname with
+
                     | ThingType.Comment ->
                         let parent =
                             bot.RedditClient
                                 .Comment(comment.ParentFullname)
                         yield! loop parent
+
+                    | ThingType.Post ->
+                        let post =
+                            bot.RedditClient
+                                .SelfPost(comment.ParentFullname)
+                        if getRole post.Author bot = Role.User then
+                            yield! getPostHistory post bot
+
                     | _ -> ()
             ]
 
@@ -224,14 +268,14 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
         let comment = comment.Info()
 
             // don't reply to bot's own comments
-        if getRole comment bot <> Role.Assistant
+        if getRole comment.Author bot <> Role.Assistant
             && comment.Body <> "[deleted]" then   // no better way to check this?
 
                 // has bot already replied to this comment?
             let handled =
                 comment.Replies
                     |> Seq.exists (fun child ->
-                        getRole child bot = Role.Assistant)
+                        getRole child.Author bot = Role.Assistant)
 
                 // if not, begin to create a reply
             if handled then CommentResult.Ignored
