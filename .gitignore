@@ -361,4 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/RedditChatBot/Properties/launchSettings.json
+
+# Visual studio launch settings (contains Azure app config connection string)
+**/Properties/launchSettings.json
