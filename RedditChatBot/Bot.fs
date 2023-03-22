@@ -90,7 +90,7 @@ module Bot =
     let private say author text =
         assert(hasContent author)
         assert(hasContent text)
-        $"{author} says \"{text}\""
+        $"{author} says {text}"
 
     /// Converts the given text to a chat message based on its
     /// author's role.
