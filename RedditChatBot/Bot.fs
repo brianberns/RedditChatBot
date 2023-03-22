@@ -111,7 +111,6 @@ module Bot =
 
     /// Converts the given post's content into a history.
     let private getPostHistory (post : SelfPost) bot =
-        let post = post.About()
         [
             createChatMessage post.Author post.Title bot
             if hasContent post.SelfText then
@@ -141,6 +140,7 @@ module Bot =
                         let post =
                             bot.RedditClient
                                 .SelfPost(comment.ParentFullname)
+                                .About()
                         if getRole post.Author bot = Role.User then
                             yield! getPostHistory post bot
 
