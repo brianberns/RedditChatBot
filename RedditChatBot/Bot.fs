@@ -361,9 +361,7 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
                     // try to get more messages?
                 if messages.Count > 0 then
                     let count' = messages.Count + count
-                    let after' =
-                        let message = Seq.last messages
-                        message.Name
+                    let after' = (Seq.last messages).Name
                     yield! loop count' after'
             }
 
