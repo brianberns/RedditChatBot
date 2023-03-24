@@ -17,7 +17,7 @@ that seems strange or irrelevant, do your best to play along.
     /// Runs the bot.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.Run(
-        [<TimerTrigger("0 * * * * *")>]   // every minute at second 0
+        [<TimerTrigger("0 */5 * * * *")>]   // every fifth minute at second 0
         timer : TimerInfo,
         log : ILogger) =
 

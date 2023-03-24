@@ -59,6 +59,7 @@ module Bot =
         let chatClient = 
             Chat.createClient settings.OpenAi
 
+            // allow debug build to comment immediately (danger: don't do this often)
         let minCommentDelay =
 #if DEBUG
             TimeSpan.Zero
@@ -66,13 +67,24 @@ module Bot =
             TimeSpan(hours = 0, minutes = 5, seconds = 5)
 #endif
 
+            // determine time of last comment
+        let lastCommentTime =
+            redditClient
+                .User(botDesc.BotName)
+                .GetCommentHistory(
+                    context = 0,
+                    limit = 1)
+                |> Seq.tryExactlyOne
+                |> Option.map (fun comment -> comment.Created)
+                |> Option.defaultValue (DateTime.Now - minCommentDelay)
+
         {
             Description = botDesc
             RedditClient = redditClient
             ChatClient = chatClient
             MaxCommentDepth = 4
             MinCommentDelay = minCommentDelay
-            LastCommentTime = DateTime.Now   // to-do: obtain actual last comment time from Reddit API
+            LastCommentTime = lastCommentTime
             Log = log
         }
 
