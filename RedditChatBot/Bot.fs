@@ -36,12 +36,6 @@ type Bot =
         /// Maximum number of bot comments in a nested thread.
         MaxCommentDepth : int
 
-        /// Minimum time between comments, to avoid Reddit's spam filter.
-        MinCommentDelay : TimeSpan
-
-        /// Time of the bot's most recent comment.
-        LastCommentTime : DateTime
-
         /// Logger.
         Log : ILogger
     }
@@ -59,32 +53,11 @@ module Bot =
         let chatClient = 
             Chat.createClient settings.OpenAi
 
-            // allow debug build to comment immediately (danger: don't do this often)
-        let minCommentDelay =
-#if DEBUG
-            TimeSpan.Zero
-#else
-            TimeSpan(hours = 0, minutes = 5, seconds = 5)
-#endif
-
-            // determine time of last comment
-        let lastCommentTime =
-            redditClient
-                .User(botDesc.BotName)
-                .GetCommentHistory(
-                    context = 0,
-                    limit = 1)
-                |> Seq.tryExactlyOne
-                |> Option.map (fun comment -> comment.Created)
-                |> Option.defaultValue (DateTime.Now - minCommentDelay)
-
         {
             Description = botDesc
             RedditClient = redditClient
             ChatClient = chatClient
             MaxCommentDepth = 4
-            MinCommentDelay = minCommentDelay
-            LastCommentTime = lastCommentTime
             Log = log
         }
 
@@ -249,17 +222,6 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
             bot.Log.LogWarning($"Unexpected assessment: {str}")
             Normal
 
-    /// Delays the given bot, if necessary.
-    let private delay bot =
-        let nextCommentTime =
-            bot.LastCommentTime + bot.MinCommentDelay
-        let timeout =
-            nextCommentTime - DateTime.Now
-        if timeout > TimeSpan.Zero then
-            bot.Log.LogInformation(
-                $"Sleeping until {nextCommentTime}")
-            Thread.Sleep(timeout)
-
     /// Result of attempting submitting a reply comment.
     [<RequireQualifiedAccess>]
     type private CommentResult =
@@ -315,7 +277,6 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
                                 bot.ChatClient
                     
                         // submit reply
-                    delay bot
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
                         |> comment.Reply
                         |> ignore

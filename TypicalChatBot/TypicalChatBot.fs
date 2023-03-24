@@ -17,7 +17,7 @@ that seems strange or irrelevant, do your best to play along.
     /// Runs the bot.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.Run(
-        [<TimerTrigger("0 * * * * *")>]   // every minute at second 0
+        [<TimerTrigger("0 * * * * *")>]   // every minute at second 0 (probably too fast for Reddit's spam filter)
         timer : TimerInfo,
         log : ILogger) =
 
