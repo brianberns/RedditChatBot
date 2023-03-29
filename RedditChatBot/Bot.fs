@@ -50,7 +50,7 @@ module Bot =
 
             // connect to Reddit
         let redditClient =
-                Reddit.createClient settings.Reddit botDesc
+            Reddit.createClient settings.Reddit botDesc
 
             // connect to chat service
         let chatClient = 
