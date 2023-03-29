@@ -1,0 +1,1 @@
+A friendly bot that runs every five minutes on Reddit.

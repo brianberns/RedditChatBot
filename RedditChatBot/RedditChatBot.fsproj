@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="Readme.md" />
     <Compile Include="Startup.fs" />
     <Compile Include="Reddit.fs" />
     <Compile Include="Chat.fs" />
