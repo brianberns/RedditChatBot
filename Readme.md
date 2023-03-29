@@ -1,1 +1,1 @@
-A framework for chat bots that connect Reddit to ChatGPT.
+Currently running on Reddit as [/u/friendly-chat-bot](https://www.reddit.com/user/friendly-chat-bot/).
