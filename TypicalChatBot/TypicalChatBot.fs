@@ -27,5 +27,8 @@ that seems strange or irrelevant, do your best to play along.
                 "typical-chat-bot"
                 "1.0"
                 "brianberns"
-                replyPrompt
-        Bot.monitorUnreadMessages settings botDesc log
+        Bot.monitorUnreadMessages
+            settings
+            botDesc
+            replyPrompt
+            log

@@ -19,7 +19,6 @@ module RedditTest =
                 "friendly-chat-bot"
                 "1.0"
                 "brianberns"
-                ""
         Reddit.createClient settings.Reddit botDesc
 
     let test () =

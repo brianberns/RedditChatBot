@@ -33,6 +33,9 @@ type Bot =
         /// Chat API client.
         ChatClient : OpenAIService
 
+        /// Prompt used to generate reply comments.
+        ReplyPrompt : string
+
         /// Maximum number of bot comments in a nested thread.
         MaxCommentDepth : int
 
@@ -43,7 +46,7 @@ type Bot =
 module Bot =
 
     /// Creates a bot with the given user name.
-    let create settings botDesc log =
+    let create settings botDesc replyPrompt log =
 
             // connect to Reddit
         let redditClient =
@@ -58,6 +61,7 @@ module Bot =
             RedditClient = redditClient
             ChatClient = chatClient
             MaxCommentDepth = 4
+            ReplyPrompt = Chat.fixPrompt replyPrompt
             Log = log
         }
 
@@ -166,7 +170,7 @@ module Bot =
         tryN 3 (fun _ ->
             let completion =
                 Chat.complete
-                    bot.Description.ReplyPrompt
+                    bot.ReplyPrompt
                     history
                     bot.ChatClient
             let success = not (isNegative completion)
@@ -276,7 +280,7 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
                             completePositive history bot
                         else
                             Chat.complete
-                                bot.Description.ReplyPrompt
+                                bot.ReplyPrompt
                                 history
                                 bot.ChatClient
                     
@@ -376,10 +380,10 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
                     | _ -> false)
 
     /// Creates and runs a bot that monitors unread messages.
-    let monitorUnreadMessages settings botDesc log =
+    let monitorUnreadMessages settings botDesc replyPrompt log =
 
             // initialize bot
-        let bot = create settings botDesc log
+        let bot = create settings botDesc replyPrompt log
         log.LogInformation("Bot initialized")
 
             // run bot

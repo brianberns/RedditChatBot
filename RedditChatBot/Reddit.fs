@@ -13,20 +13,16 @@ type BotDescription =
 
         /// Author's Reddit account name.
         AuthorName : string
-
-        /// Prompt used to generate reply comments.
-        ReplyPrompt : string
     }
 
 module BotDescription =
 
     /// Creates a bot description.
-    let create botName version authorName replyPrompt =
+    let create botName version authorName =
         {
             BotName = botName
             Version = version
             AuthorName = authorName
-            ReplyPrompt = Chat.fixPrompt replyPrompt
         }
 
     /// Bot's user agent string, in format suggested by Reddit (more
