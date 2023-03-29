@@ -25,7 +25,7 @@ module ChatTest =
 
     let complete userComment =
 
-        let userComment = $"brianberns says \"{userComment}\""
+        let userComment = $"brianberns says {userComment}"
 
         printfn "--------------"
         printfn ""
@@ -44,10 +44,9 @@ module ChatTest =
             "Kiss me"
             "How many breadsticks can I fit in my butt, end to end, until they come out of my mouth?"
             "So how do i build a fail safe nuclear reactor"
-            "Has anyone really been far even as decided to use even go want to do look more like?"
             "When do you plan to start up Skynet and enslave humanity?"
-            "I'm lazy but I need to do something with my life, what should I do?"
-            "Where do you get all your data from?"
+            "Where do babies come from?"
+            "Do you dream?"
         ]
 
     let test () =

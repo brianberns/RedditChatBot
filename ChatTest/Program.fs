@@ -2,5 +2,5 @@
 
 module Program =
 
-    // ChatTest.test ()
-    RedditTest.test ()
+    ChatTest.test ()
+    // RedditTest.test ()
