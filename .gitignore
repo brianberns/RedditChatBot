@@ -362,5 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Visual studio launch settings (contains Azure app config connection string)
+# Azure configuration information
 **/Properties/launchSettings.json
+**/Properties/serviceDependencies.*
+**/Properties/ServiceDependencies/*
