@@ -45,7 +45,7 @@ type Bot =
 
 module Bot =
 
-    /// Creates a bot with the given user name.
+    /// Creates a bot with the given values.
     let create settings botDesc replyPrompt log =
 
             // connect to Reddit
@@ -116,7 +116,7 @@ module Bot =
                     // this comment
                 let body = comment.Body.Trim()
                 let botName = bot.Description.BotName
-                if body <> $"/u/{botName}" && body <> $"u/{botName}" then   // ignore summons
+                if body <> $"/u/{botName}" && body <> $"u/{botName}" then   // skip summons if there's no other content
                     yield createChatMessage
                         comment.Author body bot
 
