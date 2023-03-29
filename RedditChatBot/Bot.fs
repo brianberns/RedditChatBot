@@ -94,13 +94,14 @@ module Bot =
      * (Unfortunately, Comment.About() seems to have a race condition.)
      *)
 
-    /// Converts the given post's content into a history.
-    let private getPostHistory (post : SelfPost) bot =
-        [
-            createChatMessage post.Author post.Title bot
+    /// Converts the given post's content into a message.
+    let private getPostMessage (post : SelfPost) bot =
+        let content =
             if hasContent post.SelfText then
-                createChatMessage post.Author post.SelfText bot
-        ]
+                post.Title + Environment.NewLine + post.SelfText
+            else
+                post.Title
+        createChatMessage post.Author content bot
 
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
@@ -109,8 +110,11 @@ module Bot =
             let comment = comment.Info()
             [
                     // this comment
-                yield createChatMessage
-                    comment.Author comment.Body bot
+                let body = comment.Body.Trim()
+                let botName = bot.Description.BotName
+                if body <> $"/u/{botName}" && body <> $"u/{botName}" then   // ignore summons
+                    yield createChatMessage
+                        comment.Author body bot
 
                     // ancestors
                 match Thing.getType comment.ParentFullname with
@@ -127,7 +131,7 @@ module Bot =
                                 .SelfPost(comment.ParentFullname)
                                 .About()
                         if getRole post.Author bot = Role.User then
-                            yield! getPostHistory post bot
+                            yield getPostMessage post bot
 
                     | _ -> ()
             ]
