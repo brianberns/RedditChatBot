@@ -9,7 +9,12 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FriendlyChatBot", "Friendly
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TypicalChatBot", "TypicalChatBot\TypicalChatBot.fsproj", "{699575DF-077C-40EE-8554-76D3D73D1B9D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ChatTest", "ChatTest\ChatTest.fsproj", "{925B070C-50FE-494B-BA85-8CF8A24B0A8F}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ChatTest", "ChatTest\ChatTest.fsproj", "{925B070C-50FE-494B-BA85-8CF8A24B0A8F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1C775845-5CD6-462C-AAE9-3B3A59A6F828}"
+	ProjectSection(SolutionItems) = preProject
+		Readme.md = Readme.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
