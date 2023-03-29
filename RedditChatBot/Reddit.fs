@@ -11,7 +11,7 @@ type BotDescription =
         /// Bot version. E.g. "1.0".
         Version : string
 
-        /// Author's Reddit account name.
+        /// Bot author's Reddit account name.
         AuthorName : string
     }
 
