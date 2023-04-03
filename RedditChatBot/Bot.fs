@@ -157,79 +157,6 @@ module Bot =
 
         loop numTries
 
-    /// Completes the given history positively.
-    let private completePositive history bot =
-
-        let isNegative (text : string) =
-            let text = text.ToLower()
-            text.Contains("disrespectful")
-                || text.Contains("not respectful")
-                || text.Contains("inappropriate")
-                || text.Contains("not appropriate")
-
-        tryN 3 (fun _ ->
-            let completion =
-                Chat.complete
-                    bot.ReplyPrompt
-                    history
-                    bot.ChatClient
-            let success = not (isNegative completion)
-            success, completion)
-
-    (*
-     * ChatGPT can be coaxed to go along with comments that it sees
-     * as strange or irrelevant, but it often reacts sharply to
-     * anything that it finds disrespectful or inappropriate, even
-     * if instructed not to. So our strategy is to:
-     *
-     * - Ask ChatGPT to categorize all comments before replying.
-     * - Ask it to go along with "strange" comments.
-     * - Handle "inappropriate" comments by filtering out sharp
-     *   replies.
-     *)
-
-    /// Bot's assessment of a user comment.
-    type private Assessment =
-        | Normal
-        | Strange
-        | Inappropriate
-
-    /// Assessment prompt.
-    let private assessmentPrompt =
-        Chat.fixPrompt """
-You are a friendly Reddit user. Assess the following comment, and
-reply with a single word. If the comment is disrespectful or
-inappropriate, reply with "Inappropriate". If the comment is strange
-or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
-        """
-
-    /// Assesses the given history.
-    let private assess (history : ChatHistory) bot =
-
-        let str =
-            let history' =
-                history
-                    |> Seq.where (fun msg -> msg.Role = Role.User)
-                    |> Seq.map (fun msg -> msg.Content)
-                    |> String.concat "\r\n"
-                    |> FChatMessage.create Role.User
-                    |> List.singleton
-            Chat.complete
-                assessmentPrompt
-                history'
-                bot.ChatClient
-
-        let str = str.ToLower()
-        if str.StartsWith("inappropriate") then
-            Inappropriate
-        elif str.StartsWith("strange") then
-            Strange
-        elif str.StartsWith("normal") then
-            Normal
-        else
-            bot.Log.LogWarning($"Unexpected assessment: {str}")
-            Normal
-
     /// Result of attempting submitting a reply comment.
     [<RequireQualifiedAccess>]
     type private CommentResult =
@@ -271,18 +198,12 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
                         |> Seq.length
                 if nBot < bot.MaxCommentDepth then
 
-                        // assess input
-                    let assessment = assess history bot
-
                         // obtain chat completion
                     let completion =
-                        if assessment = Inappropriate then
-                            completePositive history bot
-                        else
-                            Chat.complete
-                                bot.ReplyPrompt
-                                history
-                                bot.ChatClient
+                        Chat.complete
+                            bot.ReplyPrompt
+                            history
+                            bot.ChatClient
                     
                         // submit reply
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
@@ -348,7 +269,7 @@ or irrelevant, reply with "Strange". Otherwise, reply with "Normal".
 
         loop 0 ""
             |> Seq.sortBy (fun message ->
-                message.CreatedUTC)   // oldest messages first
+                -message.Score, message.CreatedUTC)
             |> Seq.toArray
 
     /// Runs the given bot.

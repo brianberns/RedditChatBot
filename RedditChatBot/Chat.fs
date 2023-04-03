@@ -79,7 +79,7 @@ module Chat =
                 |]
             ChatCompletionCreateRequest(
                 Messages = messages,
-                Model = Models.ChatGpt3_5Turbo)
+                Model = Models.Gpt_4)
 
             // wait for the response (single-threaded, no point in getting fancy)
         let resp = client.ChatCompletion.CreateCompletion(req).Result
