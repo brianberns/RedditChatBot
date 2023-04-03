@@ -65,6 +65,34 @@ module Reddit =
             appSecret = settings.AppSecret,
             userAgent = BotDescription.toUserAgent botDesc)
 
+    /// Fetches all of the bot's unread messages.
+    let getAllUnreadMessages (client : RedditClient) =
+
+        let rec loop count after =
+
+                // get a batch of messages
+            let messages =
+                client.Account.Messages
+                    .GetMessagesUnread(
+                        limit = 100,
+                        after = after,
+                        count = count)
+
+            seq {
+                yield! messages
+
+                    // try to get more messages?
+                if messages.Count > 0 then
+                    let count' = messages.Count + count
+                    let after' = (Seq.last messages).Name
+                    yield! loop count' after'
+            }
+
+        loop 0 ""
+            |> Seq.sortBy (fun message ->
+                -message.Score, message.CreatedUTC)
+            |> Seq.toArray
+
 /// Type of a reddit thing.
 [<RequireQualifiedAccess>]
 type ThingType =

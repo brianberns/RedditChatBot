@@ -23,11 +23,7 @@ module RedditTest =
 
     let test () =
         let messages =
-            redditClient.Account.Messages
-                .GetMessagesUnread(limit = 1000)
-                |> Seq.sortBy (fun message ->
-                    -message.Score, message.CreatedUTC)
-                |> Seq.toArray
+            Reddit.getAllUnreadMessages redditClient
         printfn $"{messages.Length} unread message(s)"
         for message in messages do
             let comment =

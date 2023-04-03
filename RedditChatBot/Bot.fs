@@ -244,39 +244,11 @@ module Bot =
                 handleException exn bot
                 false, CommentResult.Error)
 
-    /// Fetches all of the bot's unread messages.
-    let getAllUnreadMessages bot =
-
-        let rec loop count after =
-
-                // get a batch of messages
-            let messages =
-                bot.RedditClient.Account.Messages
-                    .GetMessagesUnread(
-                        limit = 100,
-                        after = after,
-                        count = count)
-
-            seq {
-                yield! messages
-
-                    // try to get more messages?
-                if messages.Count > 0 then
-                    let count' = messages.Count + count
-                    let after' = (Seq.last messages).Name
-                    yield! loop count' after'
-            }
-
-        loop 0 ""
-            |> Seq.sortBy (fun message ->
-                -message.Score, message.CreatedUTC)
-            |> Seq.toArray
-
     /// Runs the given bot.
     let private run bot =
 
             // get candidate messages that we might reply to
-        let messages = getAllUnreadMessages bot
+        let messages = Reddit.getAllUnreadMessages bot.RedditClient
         bot.Log.LogInformation($"{messages.Length} unread message(s) found")
 
             // reply to no more than one message
