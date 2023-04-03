@@ -21,6 +21,15 @@ module RedditTest =
                 "brianberns"
         Reddit.createClient settings.Reddit botDesc
 
+    let rec getPost fullname =
+        match Thing.getType fullname with
+            | ThingType.Post ->
+                redditClient.Post(fullname).About()
+            | ThingType.Comment ->
+                let comment = redditClient.Comment(fullname).About()
+                getPost comment.ParentFullname
+            | _ -> failwith "Unexpected"
+
     let test () =
         let messages =
             Reddit.getAllUnreadMessages redditClient
@@ -33,7 +42,6 @@ module RedditTest =
             printfn $"{message.Body}"
             printfn $"{message.CreatedUTC.ToLocalTime()}"
             printfn $"Score: {message.Score}"
-            printfn $"/r/{message.Subreddit}"
-            if Thing.getType message.ParentId = ThingType.Post then
-                let post = redditClient.Post(message.ParentId).About()
-                printfn $"{post.Title}"
+            let post = getPost message.ParentId
+            printfn $"{post.Title}"
+            printfn $"https://www.reddit.com{message.Context}"
