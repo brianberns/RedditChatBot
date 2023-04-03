@@ -25,4 +25,19 @@ module RedditTest =
         let messages =
             redditClient.Account.Messages
                 .GetMessagesUnread(limit = 1000)
-        printfn $"{messages.Count}"
+                |> Seq.sortBy (fun message ->
+                    -message.Score, message.CreatedUTC)
+                |> Seq.toArray
+        printfn $"{messages.Length} unread message(s)"
+        for message in messages do
+            let comment =
+                redditClient.Comment(message.Name)
+                    .About()
+            printfn ""
+            printfn $"{message.Body}"
+            printfn $"{message.CreatedUTC.ToLocalTime()}"
+            printfn $"Score: {message.Score}"
+            printfn $"/r/{message.Subreddit}"
+            if Thing.getType message.ParentId = ThingType.Post then
+                let post = redditClient.Post(message.ParentId).About()
+                printfn $"{post.Title}"
