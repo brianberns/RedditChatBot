@@ -2,7 +2,6 @@
 
 open OpenAI.GPT3
 open OpenAI.GPT3.Managers
-open OpenAI.GPT3.ObjectModels
 open OpenAI.GPT3.ObjectModels.RequestModels
 
 /// OpenAI settings associated with this app. Don't share these!
@@ -78,9 +77,13 @@ module FChatMessage =
 /// Chonological sequence of chat messages.
 type ChatHistory = List<FChatMessage>
 
+/// A chat bot.
 type ChatBot =
     {
+        /// Bot definition.
         BotDef : ChatBotDef
+
+        /// OpenAI API client.
         Client : OpenAIService
     }
 
