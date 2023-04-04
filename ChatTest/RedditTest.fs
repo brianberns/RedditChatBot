@@ -14,12 +14,12 @@ module RedditTest =
                 .AddAzureAppConfiguration(cs)
                 .Build()
                 .Get<AppSettings>()
-        let botDesc =
-            BotDescription.create
+        let botDef =
+            RedditBotDef.create
                 "friendly-chat-bot"
                 "1.0"
                 "brianberns"
-        Reddit.createClient settings.Reddit botDesc
+        Reddit.createClient settings.Reddit botDef
 
     let rec getPost fullname =
         match Thing.getType fullname with
@@ -35,9 +35,6 @@ module RedditTest =
             Reddit.getAllUnreadMessages redditClient
         printfn $"{messages.Length} unread message(s)"
         for message in messages do
-            let comment =
-                redditClient.Comment(message.Name)
-                    .About()
             printfn ""
             printfn $"{message.Body}"
             printfn $"{message.CreatedUTC.ToLocalTime()}"

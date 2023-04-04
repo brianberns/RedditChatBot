@@ -24,14 +24,17 @@ type AppSettings =
 /// A Reddit chat bot.
 type Bot =
     {
-        /// Bot description.
-        Description : BotDescription
+        /// Reddit bot definition.
+        RedditBotDef : RedditBotDef
 
         /// Reddit API client.
         RedditClient : RedditClient
 
         /// Chat API client.
         ChatClient : OpenAIService
+
+        /// Chat model.
+        ChatModel : string
 
         /// Prompt used to generate reply comments.
         ReplyPrompt : string
@@ -46,20 +49,21 @@ type Bot =
 module Bot =
 
     /// Creates a bot with the given values.
-    let create settings botDesc replyPrompt log =
+    let create settings redditBotDef model replyPrompt log =
 
             // connect to Reddit
         let redditClient =
-            Reddit.createClient settings.Reddit botDesc
+            Reddit.createClient settings.Reddit redditBotDef
 
             // connect to chat service
         let chatClient = 
             Chat.createClient settings.OpenAi
 
         {
-            Description = botDesc
+            RedditBotDef = redditBotDef
             RedditClient = redditClient
             ChatClient = chatClient
+            ChatModel = model
             MaxCommentDepth = 4
             ReplyPrompt = Chat.fixPrompt replyPrompt
             Log = log
@@ -67,7 +71,7 @@ module Bot =
 
     /// Determines the role of the given author.
     let private getRole author bot =
-        if author = bot.Description.BotName then
+        if author = bot.RedditBotDef.BotName then
             Role.Assistant
         else Role.User
 
@@ -115,7 +119,7 @@ module Bot =
             [
                     // this comment
                 let body = comment.Body.Trim()
-                let botName = bot.Description.BotName
+                let botName = bot.RedditBotDef.BotName
                 if body <> $"/u/{botName}" && body <> $"u/{botName}" then   // skip summons if there's no other content
                     yield createChatMessage
                         comment.Author body bot
@@ -273,10 +277,15 @@ module Bot =
                     | _ -> false)
 
     /// Creates and runs a bot that monitors unread messages.
-    let monitorUnreadMessages settings botDesc replyPrompt log =
+    let monitorUnreadMessages
+        settings
+        redditBotDef
+        model
+        replyPrompt
+        log =
 
             // initialize bot
-        let bot = create settings botDesc replyPrompt log
+        let bot = create settings redditBotDef model replyPrompt log
         log.LogInformation("Bot initialized")
 
             // run bot

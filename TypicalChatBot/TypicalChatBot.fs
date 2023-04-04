@@ -22,13 +22,14 @@ that seems strange or irrelevant, do your best to play along.
         log : ILogger) =
 
         let settings = config.Get<AppSettings>()
-        let botDesc =
-            BotDescription.create
+        let redditBotDef =
+            RedditBotDef.create
                 "typical-chat-bot"
                 "1.0"
                 "brianberns"
         Bot.monitorUnreadMessages
             settings
-            botDesc
+            redditBotDef
+            OpenAI.GPT3.ObjectModels.Models.Gpt_4
             replyPrompt
             log

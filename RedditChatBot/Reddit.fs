@@ -2,8 +2,8 @@
 
 open Reddit
 
-/// Reddit bot description.
-type BotDescription =
+/// Reddit bot definition.
+type RedditBotDef =
     {
         /// Bot's Reddit account name.
         BotName : string
@@ -15,9 +15,9 @@ type BotDescription =
         AuthorName : string
     }
 
-module BotDescription =
+module RedditBotDef =
 
-    /// Creates a bot description.
+    /// Creates a Reddit bot definition.
     let create botName version authorName =
         {
             BotName = botName
@@ -27,8 +27,8 @@ module BotDescription =
 
     /// Bot's user agent string, in format suggested by Reddit (more
     /// or less).
-    let toUserAgent botDesc =
-        $"{botDesc.BotName}:v{botDesc.Version} (by /u/{botDesc.AuthorName})"
+    let toUserAgent botDef =
+        $"{botDef.BotName}:v{botDef.Version} (by /u/{botDef.AuthorName})"
 
 (*
  * To create a Reddit bot:
@@ -58,12 +58,12 @@ type RedditSettings =
 module Reddit =
 
     /// Creates a Reddit API client.
-    let createClient settings botDesc =
+    let createClient settings botDef =
         RedditClient(
             appId = settings.ApiKey,
             refreshToken = settings.RefreshToken,
             appSecret = settings.AppSecret,
-            userAgent = BotDescription.toUserAgent botDesc)
+            userAgent = RedditBotDef.toUserAgent botDef)
 
     /// Fetches all of the bot's unread messages.
     let getAllUnreadMessages (client : RedditClient) =
