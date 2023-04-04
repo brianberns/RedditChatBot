@@ -24,20 +24,11 @@ type AppSettings =
 /// A Reddit chat bot.
 type Bot =
     {
-        /// Reddit bot definition.
-        RedditBotDef : RedditBotDef
+        /// Reddit bot.
+        RedditBot : RedditBot
 
-        /// Reddit API client.
-        RedditClient : RedditClient
-
-        /// Chat API client.
-        ChatClient : OpenAIService
-
-        /// Chat model.
-        ChatModel : string
-
-        /// Prompt used to generate reply comments.
-        ReplyPrompt : string
+        /// Chat bot.
+        ChatBot : ChatBot
 
         /// Maximum number of bot comments in a nested thread.
         MaxCommentDepth : int
@@ -49,29 +40,26 @@ type Bot =
 module Bot =
 
     /// Creates a bot with the given values.
-    let create settings redditBotDef model replyPrompt log =
+    let create settings redditBotDef chatBotDef log =
 
             // connect to Reddit
-        let redditClient =
-            Reddit.createClient settings.Reddit redditBotDef
+        let redditBot =
+            RedditBot.create settings.Reddit redditBotDef
 
             // connect to chat service
-        let chatClient = 
-            Chat.createClient settings.OpenAi
+        let chatBot = 
+            ChatBot.create settings.OpenAi chatBotDef
 
         {
-            RedditBotDef = redditBotDef
-            RedditClient = redditClient
-            ChatClient = chatClient
-            ChatModel = model
+            RedditBot = redditBot
+            ChatBot = chatBot
             MaxCommentDepth = 4
-            ReplyPrompt = Chat.fixPrompt replyPrompt
             Log = log
         }
 
     /// Determines the role of the given author.
     let private getRole author bot =
-        if author = bot.RedditBotDef.BotName then
+        if author = bot.RedditBot.BotDef.BotName then
             Role.Assistant
         else Role.User
 
@@ -119,7 +107,7 @@ module Bot =
             [
                     // this comment
                 let body = comment.Body.Trim()
-                let botName = bot.RedditBotDef.BotName
+                let botName = bot.RedditBot.BotDef.BotName
                 if body <> $"/u/{botName}" && body <> $"u/{botName}" then   // skip summons if there's no other content
                     yield createChatMessage
                         comment.Author body bot
@@ -129,13 +117,13 @@ module Bot =
 
                     | ThingType.Comment ->
                         let parent =
-                            bot.RedditClient
+                            bot.RedditBot.Client
                                 .Comment(comment.ParentFullname)
                         yield! loop parent
 
                     | ThingType.Post ->
                         let post =
-                            bot.RedditClient
+                            bot.RedditBot.Client
                                 .SelfPost(comment.ParentFullname)
                                 .About()
                         if getRole post.Author bot = Role.User then
@@ -204,10 +192,7 @@ module Bot =
 
                         // obtain chat completion
                     let completion =
-                        Chat.complete
-                            bot.ReplyPrompt
-                            history
-                            bot.ChatClient
+                        ChatBot.complete history bot.ChatBot
                     
                         // submit reply
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
@@ -252,7 +237,7 @@ module Bot =
     let private run bot =
 
             // get candidate messages that we might reply to
-        let messages = Reddit.getAllUnreadMessages bot.RedditClient
+        let messages = RedditBot.getAllUnreadMessages bot.RedditBot
         bot.Log.LogInformation($"{messages.Length} unread message(s) found")
 
             // reply to no more than one message
@@ -264,12 +249,12 @@ module Bot =
 
                             // attempt to reply to message
                         let comment =
-                            bot.RedditClient.Comment(fullname)
+                            bot.RedditBot.Client.Comment(fullname)
                         let result = submitReplySafe comment bot
 
                             // mark message read?
                         if result <> CommentResult.Error then
-                            bot.RedditClient.Account.Messages
+                            bot.RedditBot.Client.Account.Messages
                                 .ReadMessage(fullname)   // this is weird, but apparently correct
 
                             // stop looking?
@@ -277,15 +262,10 @@ module Bot =
                     | _ -> false)
 
     /// Creates and runs a bot that monitors unread messages.
-    let monitorUnreadMessages
-        settings
-        redditBotDef
-        model
-        replyPrompt
-        log =
+    let monitorUnreadMessages settings redditBotDef chatBotDef log =
 
             // initialize bot
-        let bot = create settings redditBotDef model replyPrompt log
+        let bot = create settings redditBotDef chatBotDef log
         log.LogInformation("Bot initialized")
 
             // run bot

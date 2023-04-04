@@ -5,7 +5,7 @@ open Microsoft.Extensions.Configuration
 
 module RedditTest =
 
-    let redditClient =
+    let redditBot =
 
         let settings =
             let cs =
@@ -19,20 +19,21 @@ module RedditTest =
                 "friendly-chat-bot"
                 "1.0"
                 "brianberns"
-        Reddit.createClient settings.Reddit botDef
+        RedditBot.create settings.Reddit botDef
 
     let rec getPost fullname =
         match Thing.getType fullname with
             | ThingType.Post ->
-                redditClient.Post(fullname).About()
+                redditBot.Client.Post(fullname).About()
             | ThingType.Comment ->
-                let comment = redditClient.Comment(fullname).About()
+                let comment =
+                    redditBot.Client.Comment(fullname).About()
                 getPost comment.ParentFullname
             | _ -> failwith "Unexpected"
 
     let test () =
         let messages =
-            Reddit.getAllUnreadMessages redditClient
+            RedditBot.getAllUnreadMessages redditBot
         printfn $"{messages.Length} unread message(s)"
         for message in messages do
             printfn ""

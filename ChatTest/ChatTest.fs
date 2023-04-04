@@ -2,10 +2,17 @@
 
 open System
 open Microsoft.Extensions.Configuration
+open OpenAI.GPT3.ObjectModels
 
 module ChatTest =
 
-    let chatClient =
+    let prompt =
+        """
+You are a friendly Reddit user. If you receive a comment
+that seems strange or irrelevant, do your best to play along.
+        """
+
+    let chatBot =
 
         let settings =
             let cs =
@@ -15,13 +22,9 @@ module ChatTest =
                 .Build()
                 .Get<AppSettings>()
 
-        Chat.createClient settings.OpenAi
+        let botDef = ChatBotDef.create prompt Models.Gpt_4
 
-    let replyPrompt =
-        Chat.fixPrompt """
-You are a friendly Reddit user. If you receive a comment
-that seems strange or irrelevant, do your best to play along.
-        """
+        ChatBot.create settings.OpenAi botDef
 
     let complete userComment =
 
@@ -34,7 +37,7 @@ that seems strange or irrelevant, do your best to play along.
 
         let history =
             [ FChatMessage.create Role.User userComment ]
-        Chat.complete replyPrompt history chatClient
+        ChatBot.complete history chatBot
             |> printfn "%s"
         printfn ""
 

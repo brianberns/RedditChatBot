@@ -12,6 +12,32 @@ type OpenAiSettings =
         ApiKey : string
     }
 
+/// Chat bot definition.
+type ChatBotDef =
+    {
+        /// System-level prompt.
+        Prompt : string
+
+        /// GPT model.
+        Model : string
+    }
+
+module ChatBotDef =
+
+    /// Fixes prompt whitespace.
+    let private fixPrompt (prompt : string) =
+        prompt
+            .Replace("\r", "")
+            .Replace("\n", " ")
+            .Trim()
+
+    /// Creates a chat bot definition.
+    let create prompt model =
+        {
+            Prompt = fixPrompt prompt
+            Model = model
+        }
+
 /// Message roles.
 [<RequireQualifiedAccess>]
 type Role =
@@ -52,37 +78,40 @@ module FChatMessage =
 /// Chonological sequence of chat messages.
 type ChatHistory = List<FChatMessage>
 
-module Chat =
+type ChatBot =
+    {
+        BotDef : ChatBotDef
+        Client : OpenAIService
+    }
 
-    /// Creates a chat client.
-    let createClient settings =
-        OpenAiOptions(ApiKey = settings.ApiKey)
-            |> OpenAIService
+module ChatBot =
 
-    /// Fixes prompt whitespace.
-    let fixPrompt (prompt : string) =
-        prompt
-            .Replace("\r", "")
-            .Replace("\n", " ")
-            .Trim()
+    /// Creates a chat bot.
+    let create settings botDef =
+        {
+            BotDef = botDef
+            Client =
+                OpenAiOptions(ApiKey = settings.ApiKey)
+                    |> OpenAIService
+        }
 
     /// Gets a response to the given chat history.
-    let complete prompt (history : ChatHistory) (client : OpenAIService) =
+    let complete (history : ChatHistory) bot =
 
             // build the request
         let req =
             let messages =
                 [|
-                    ChatMessage.FromSystem prompt
+                    ChatMessage.FromSystem bot.BotDef.Prompt
                     for msg in history do
                         FChatMessage.toNative msg
                 |]
             ChatCompletionCreateRequest(
                 Messages = messages,
-                Model = Models.Gpt_4)
+                Model = bot.BotDef.Model)
 
             // wait for the response (single-threaded, no point in getting fancy)
-        let resp = client.ChatCompletion.CreateCompletion(req).Result
+        let resp = bot.Client.ChatCompletion.CreateCompletion(req).Result
         if resp.Successful then
             let choice = Seq.exactlyOne resp.Choices
             choice.Message.Content.Trim()                       // some responses start with whitespace - why?

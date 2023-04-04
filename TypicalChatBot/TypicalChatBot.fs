@@ -4,11 +4,13 @@ open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
+open OpenAI.GPT3.ObjectModels
+
 /// Azure function type for dependency injection.
 type TypicalChatBot(config : IConfiguration) =
 
-    /// Reply prompt.
-    let replyPrompt =
+    /// System-level prompt.
+    let prompt =
         """
 You are a typical Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
@@ -27,9 +29,10 @@ that seems strange or irrelevant, do your best to play along.
                 "typical-chat-bot"
                 "1.0"
                 "brianberns"
+        let chatBotDef =
+            ChatBotDef.create prompt Models.Gpt_4
         Bot.monitorUnreadMessages
             settings
             redditBotDef
-            OpenAI.GPT3.ObjectModels.Models.Gpt_4
-            replyPrompt
+            chatBotDef
             log

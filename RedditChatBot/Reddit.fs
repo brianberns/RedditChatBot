@@ -2,6 +2,31 @@
 
 open Reddit
 
+(*
+ * To create a Reddit bot:
+ *
+ * - Use https://ssl.reddit.com/prefs/apps/ to create app ID and
+ *   secret.
+ *
+ * - Use https://not-an-aardvark.github.io/reddit-oauth-helper/
+ *   to create refresh token. Choose desired scopes and make
+ *   permanent.
+ *)
+
+/// Reddit settings associated with this app. Don't share these!
+[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
+type RedditSettings =
+    {
+        /// App unique identifier.
+        ApiKey : string
+
+        /// App secret.
+        AppSecret : string
+
+        /// App authentication refresh token.
+        RefreshToken : string
+    }
+
 /// Reddit bot definition.
 type RedditBotDef =
     {
@@ -30,49 +55,38 @@ module RedditBotDef =
     let toUserAgent botDef =
         $"{botDef.BotName}:v{botDef.Version} (by /u/{botDef.AuthorName})"
 
-(*
- * To create a Reddit bot:
- *
- * - Use https://ssl.reddit.com/prefs/apps/ to create app ID and
- *   secret.
- *
- * - Use https://not-an-aardvark.github.io/reddit-oauth-helper/
- *   to create refresh token. Choose desired scopes and make
- *   permanent.
- *)
-
-/// Reddit settings associated with this app. Don't share these!
-[<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
-type RedditSettings =
+/// A Reddit bot.
+type RedditBot =
     {
-        /// App unique identifier.
-        ApiKey : string
+        /// Bot definition.
+        BotDef : RedditBotDef
 
-        /// App secret.
-        AppSecret : string
-
-        /// App authentication refresh token.
-        RefreshToken : string
+        /// Reddit API client.
+        Client : RedditClient
     }
 
-module Reddit =
+module RedditBot =
 
-    /// Creates a Reddit API client.
-    let createClient settings botDef =
-        RedditClient(
-            appId = settings.ApiKey,
-            refreshToken = settings.RefreshToken,
-            appSecret = settings.AppSecret,
-            userAgent = RedditBotDef.toUserAgent botDef)
+    /// Creates a Reddit bot.
+    let create settings botDef =
+        {
+            BotDef = botDef
+            Client =
+                RedditClient(
+                    appId = settings.ApiKey,
+                    refreshToken = settings.RefreshToken,
+                    appSecret = settings.AppSecret,
+                    userAgent = RedditBotDef.toUserAgent botDef)
+        }
 
     /// Fetches all of the bot's unread messages.
-    let getAllUnreadMessages (client : RedditClient) =
+    let getAllUnreadMessages bot =
 
         let rec loop count after =
 
                 // get a batch of messages
             let messages =
-                client.Account.Messages
+                bot.Client.Account.Messages
                     .GetMessagesUnread(
                         limit = 100,
                         after = after,
