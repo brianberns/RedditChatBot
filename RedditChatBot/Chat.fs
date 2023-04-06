@@ -94,7 +94,9 @@ module ChatBot =
         {
             BotDef = botDef
             Client =
-                OpenAiOptions(ApiKey = settings.ApiKey)
+                OpenAiOptions(
+                    ApiKey = settings.ApiKey,
+                    BaseDomain = "https://openai.woolly.ai/")
                     |> OpenAIService
         }
 
