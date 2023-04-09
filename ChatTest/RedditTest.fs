@@ -36,10 +36,11 @@ module RedditTest =
             RedditBot.getAllUnreadMessages redditBot
         printfn $"{messages.Length} unread message(s)"
         for message in messages do
+            let post = getPost message.ParentId
             printfn ""
             printfn $"{message.Body}"
             printfn $"{message.CreatedUTC.ToLocalTime()}"
             printfn $"Score: {message.Score}"
-            let post = getPost message.ParentId
             printfn $"{post.Title}"
             printfn $"https://www.reddit.com{message.Context}"
+            printfn $"{message.Author}"
