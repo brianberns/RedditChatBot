@@ -43,7 +43,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     let trimPrefix (prefix : string) (str : string) =
         if str.StartsWith(prefix) then
             str.Substring(prefix.Length).Trim()
-        else failwith "Unexpected prefix"
+        else failwith $"Missing prefix \"{prefix}\" in \"{str}\""
 
     /// Creates a random thought.
     let createRandomThought bot =
@@ -59,7 +59,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 let title = trimPrefix "Title:" titlePart
                 let body = trimPrefix "Body:" bodyPart
                 title, body
-            | _ -> failwith "Unexpected number of parts"
+            | _ -> failwith $"Unexpected number of parts: {parts}"
 
     /// Posts a random thought.
     let postRandomThought bot =
