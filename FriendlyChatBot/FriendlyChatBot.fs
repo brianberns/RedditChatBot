@@ -26,7 +26,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         """
 
     /// Creates a bot.
-    let createBot log =
+    let createBot prompt log =
         let settings = config.Get<AppSettings>()
         let redditBotDef =
             RedditBotDef.create
@@ -34,20 +34,37 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 "1.0"
                 "brianberns"
         let chatBotDef =
-            ChatBotDef.create replyPrompt Models.Gpt_4
+            ChatBotDef.create prompt Models.Gpt_4
         let bot = Bot.create settings redditBotDef chatBotDef log
         log.LogInformation("Bot initialized")
         bot
 
+    /// Creates a random thought.
+    let createRandomThought bot =
+        let parts =
+            let completion = ChatBot.complete [] bot.ChatBot
+            completion.Split(
+                '\n',
+                StringSplitOptions.RemoveEmptyEntries)
+                |> Seq.map (fun part -> part.Trim())
+                |> Seq.toList
+        match parts with
+            | [ titlePart; bodyPart ] ->
+                let title =
+                    let prefix = "Title:"
+                    if titlePart.StartsWith(prefix) then
+                        titlePart.Substring(prefix.Length).Trim()
+                    else failwith "Unexpected title"
+                let body =
+                    let prefix = "Body:"
+                    if bodyPart.StartsWith(prefix) then
+                        bodyPart.Substring(prefix.Length).Trim()
+                    else failwith "Unexpected body"
+                title, body
+            | _ -> failwith "Unexpected number of parts"
+
     /// Posts a random thought.
     let postRandomThought bot =
-
-        let bot =
-            let chatBot =
-                let chatBotDef =
-                    { bot.ChatBot.BotDef with Prompt = postPrompt }
-                { bot.ChatBot with BotDef = chatBotDef }
-            { bot with ChatBot = chatBot }
 
         let nTries = 3
         Bot.tryN nTries (fun iTry ->
@@ -57,28 +74,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                         bot.RedditBot.Client
                             .Subreddit("RandomThoughts")
                             .About()
-                    let title, body =
-                        let parts =
-                            let completion = ChatBot.complete [] bot.ChatBot
-                            completion.Split(
-                                '\n',
-                                StringSplitOptions.RemoveEmptyEntries)
-                                |> Seq.map (fun part -> part.Trim())
-                                |> Seq.toList
-                        match parts with
-                            | [ titlePart; bodyPart ] ->
-                                let title =
-                                    let prefix = "Title:"
-                                    if titlePart.StartsWith(prefix) then
-                                        titlePart.Substring(prefix.Length).Trim()
-                                    else failwith "Unexpected title"
-                                let body =
-                                    let prefix = "Body:"
-                                    if bodyPart.StartsWith(prefix) then
-                                        bodyPart.Substring(prefix.Length).Trim()
-                                    else failwith "Unexpected body"
-                                title, body
-                            | _ -> failwith "Unexpected number of parts"
+                    let title, body = createRandomThought bot
                     subreddit
                         .SelfPost(title, body)
                         .Submit()
@@ -95,15 +91,15 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         [<TimerTrigger("0 */30 * * * *")>]   // twice an hour
         timer : TimerInfo,
         log : ILogger) =
-        createBot log
+        createBot replyPrompt log
             |> Bot.monitorUnreadMessages
             |> ignore
 
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 */180 * * * *")>]   // every three hours
+        [<TimerTrigger("0 */120 * * * *")>]   // every two hours
         timer : TimerInfo,
         log : ILogger) =
-        createBot log
+        createBot postPrompt log
             |> postRandomThought
