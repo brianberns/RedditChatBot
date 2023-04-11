@@ -18,12 +18,16 @@ You are a friendly Reddit user. If you receive a comment
 that seems strange or irrelevant, do your best to play along.
         """
 
-    /// Post prompt.
-    let postPrompt =
+    /// Random thought prompt.
+    let randomThoughtPrompt =
         """
 Generate a strange post for the /r/RandomThoughts subreddit.
 Specify the title with "Title:" and a one-sentence body with "Body:".
         """
+
+    /// Six word story prompt.
+    let sixWordStoryPrompt =
+        "Write a six word story with a twist ending"
 
     /// Creates a bot.
     let createBot prompt log =
@@ -61,17 +65,18 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 title, body
             | _ -> failwith $"Unexpected number of parts: {parts}"
 
-    /// Posts a random thought.
-    let postRandomThought bot =
-        let nTries = 3
+    /// # of retry attempts.
+    let nTries = 3
+
+    /// Submits a post
+    let submitPost subredditName title body bot =
         Bot.tryN nTries (fun iTry ->
             try
                 let post =
                     let subreddit =
                         bot.RedditBot.Client
-                            .Subreddit("RandomThoughts")
+                            .Subreddit(subredditName : string)
                             .About()
-                    let title, body = createRandomThought bot
                     subreddit
                         .SelfPost(title, body)
                         .Submit()
@@ -81,6 +86,16 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 bot.Log.LogError($"Error on post attempt #{iTry+1} of {nTries}")
                 Bot.handleException exn bot.Log
                 false, None)
+
+    /// Posts a random thought.
+    let postRandomThought bot =
+        let title, body = createRandomThought bot
+        submitPost title body "RandomThoughts"
+
+    /// Posts a six word story.
+    let postSixWordStory bot =
+        let title = ChatBot.complete [] bot.ChatBot
+        submitPost title null "sixwordstories"
 
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
@@ -98,6 +113,16 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         [<TimerTrigger("0 0 */3 * * *")>]   // every three hours
         timer : TimerInfo,
         log : ILogger) =
-        createBot postPrompt log
+        createBot randomThoughtPrompt log
             |> postRandomThought
+            |> ignore
+
+    /// Posts a six word story.
+    [<FunctionName("PostSixWordStory")>]
+    member _.PostSixWordStory(
+        [<TimerTrigger("0 0 0 * * *")>]   // every day
+        timer : TimerInfo,
+        log : ILogger) =
+        createBot sixWordStoryPrompt log
+            |> postSixWordStory
             |> ignore
