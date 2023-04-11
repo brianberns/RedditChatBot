@@ -95,7 +95,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 */120 * * * *")>]   // every two hours
+        [<TimerTrigger("0/3 * * * * *")>]   // every three hours
         timer : TimerInfo,
         log : ILogger) =
         createBot postPrompt log
