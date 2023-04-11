@@ -39,6 +39,12 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         log.LogInformation("Bot initialized")
         bot
 
+    /// Trims the given prefix from the given string.
+    let trimPrefix (prefix : string) (str : string) =
+        if str.StartsWith(prefix) then
+            str.Substring(prefix.Length).Trim()
+        else failwith "Unexpected prefix"
+
     /// Creates a random thought.
     let createRandomThought bot =
         let parts =
@@ -50,22 +56,13 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 |> Seq.toList
         match parts with
             | [ titlePart; bodyPart ] ->
-                let title =
-                    let prefix = "Title:"
-                    if titlePart.StartsWith(prefix) then
-                        titlePart.Substring(prefix.Length).Trim()
-                    else failwith "Unexpected title"
-                let body =
-                    let prefix = "Body:"
-                    if bodyPart.StartsWith(prefix) then
-                        bodyPart.Substring(prefix.Length).Trim()
-                    else failwith "Unexpected body"
+                let title = trimPrefix "Title:" titlePart
+                let body = trimPrefix "Body:" bodyPart
                 title, body
             | _ -> failwith "Unexpected number of parts"
 
     /// Posts a random thought.
     let postRandomThought bot =
-
         let nTries = 3
         Bot.tryN nTries (fun iTry ->
             try
