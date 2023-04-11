@@ -91,12 +91,12 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     /// Posts a random thought.
     let postRandomThought bot =
         let title, body = createRandomThought bot
-        submitPost title body "RandomThoughts"
+        submitPost title body "RandomThoughts" bot
 
     /// Posts a six word story.
     let postSixWordStory bot =
         let title = ChatBot.complete [] bot.ChatBot
-        submitPost title null "sixwordstories"
+        submitPost title null "sixwordstories" bot
 
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
