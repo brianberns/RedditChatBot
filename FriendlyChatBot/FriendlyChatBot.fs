@@ -30,7 +30,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         "Write a six word story with a twist ending"
 
     /// Creates a bot.
-    let createBot prompt log =
+    let createBot prompt model log =
         let settings = config.Get<AppSettings>()
         let redditBotDef =
             RedditBotDef.create
@@ -38,7 +38,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                 "1.0"
                 "brianberns"
         let chatBotDef =
-            ChatBotDef.create prompt Models.Gpt_4
+            ChatBotDef.create prompt model
         let bot = Bot.create settings redditBotDef chatBotDef log
         log.LogInformation("Bot initialized")
         bot
@@ -104,7 +104,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         [<TimerTrigger("0 */30 * * * *")>]   // twice an hour
         timer : TimerInfo,
         log : ILogger) =
-        createBot replyPrompt log
+        createBot replyPrompt Models.Gpt_4 log
             |> Bot.monitorUnreadMessages
             |> ignore
 
@@ -114,7 +114,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         [<TimerTrigger("0 0 */3 * * *")>]   // every three hours
         timer : TimerInfo,
         log : ILogger) =
-        createBot randomThoughtPrompt log
+        createBot randomThoughtPrompt Models.ChatGpt3_5Turbo log
             |> postRandomThought
             |> ignore
 
@@ -124,6 +124,6 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         [<TimerTrigger("0 0 0 * * *")>]   // every day
         timer : TimerInfo,
         log : ILogger) =
-        createBot sixWordStoryPrompt log
+        createBot sixWordStoryPrompt Models.ChatGpt3_5Turbo log
             |> postSixWordStory
             |> ignore
