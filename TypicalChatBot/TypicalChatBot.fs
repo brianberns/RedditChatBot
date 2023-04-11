@@ -21,7 +21,7 @@ that seems strange or irrelevant, do your best to play along.
         let settings = config.Get<AppSettings>()
         let redditBotDef =
             RedditBotDef.create
-                "friendly-chat-bot"
+                "typical-chat-bot"
                 "1.0"
                 "brianberns"
         let chatBotDef =

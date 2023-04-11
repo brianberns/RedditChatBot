@@ -99,6 +99,14 @@ module Bot =
                 post.Title
         createChatMessage post.Author content bot
 
+    /// Subreddits in which a bot can post autonomously.
+    let private autonomousPostSubreddits =
+        set [
+            "RandomThoughts"
+            "sixwordstories"
+            "testingground4bots"
+        ]
+
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
 
@@ -126,7 +134,10 @@ module Bot =
                             bot.RedditBot.Client
                                 .SelfPost(comment.ParentFullname)
                                 .About()
-                        if getRole post.Author bot = Role.User then
+                        let isUserPost = getRole post.Author bot = Role.User
+                        let isAutonomousSubreddit =
+                            autonomousPostSubreddits.Contains(post.Subreddit)
+                        if isUserPost || isAutonomousSubreddit then
                             yield getPostMessage post bot
 
                     | _ -> ()

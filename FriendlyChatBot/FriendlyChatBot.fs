@@ -21,7 +21,7 @@ that seems strange or irrelevant, do your best to play along.
     /// Post prompt.
     let postPrompt =
         """
-Generate a strange post for the /r/randomthoughts subreddit.
+Generate a strange post for the /r/RandomThoughts subreddit.
 Specify the title with "Title:" and a one-sentence body with "Body:".
         """
 
