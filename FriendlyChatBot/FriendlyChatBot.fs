@@ -80,6 +80,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
                     subreddit
                         .SelfPost(title, body)
                         .Submit()
+                bot.Log.LogInformation($"Post submitted: {title}")
                 true, Some post
 
             with exn ->
