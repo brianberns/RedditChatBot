@@ -100,3 +100,4 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
         log : ILogger) =
         createBot postPrompt log
             |> postRandomThought
+            |> ignore
