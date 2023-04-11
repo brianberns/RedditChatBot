@@ -135,20 +135,6 @@ module Bot =
         loop comment
             |> List.rev
 
-    /// Runs the given function repeatedly until it succeeds or
-    /// we run out of tries.
-    let private tryN numTries f =
-
-        let rec loop numTriesRemaining =
-            let success, value =
-                let iTry = numTries - numTriesRemaining
-                f iTry
-            if not success && numTriesRemaining > 1 then
-                loop (numTriesRemaining - 1)
-            else value
-
-        loop numTries
-
     /// Result of attempting submitting a reply comment.
     [<RequireQualifiedAccess>]
     type private CommentResult =
@@ -205,8 +191,22 @@ module Bot =
 
         else CommentResult.Ignored
 
+    /// Runs the given function repeatedly until it succeeds or
+    /// we run out of tries.
+    let tryN numTries f =
+
+        let rec loop numTriesRemaining =
+            let success, value =
+                let iTry = numTries - numTriesRemaining
+                f iTry
+            if not success && numTriesRemaining > 1 then
+                loop (numTriesRemaining - 1)
+            else value
+
+        loop numTries
+
     /// Handles the given exception.
-    let private handleException exn bot =
+    let handleException exn (log : ILogger) =
 
         let rec loop (exn : exn) =
             match exn with
@@ -215,7 +215,7 @@ module Bot =
                         loop innerExn
                 | _ ->
                     if isNull exn.InnerException then
-                        bot.Log.LogError(exn, exn.Message)
+                        log.LogError(exn, exn.Message)
                     else
                         loop exn.InnerException
 
@@ -230,7 +230,7 @@ module Bot =
                 true, submitReply comment bot
             with exn ->
                 bot.Log.LogError($"Error on reply attempt #{iTry+1} of {numTries}")
-                handleException exn bot
+                handleException exn bot.Log
                 false, CommentResult.Error)
 
     /// Monitors unread messages.
