@@ -96,7 +96,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     /// Posts a six word story.
     let postSixWordStory bot =
         let title = ChatBot.complete [] bot.ChatBot
-        submitPost title null "sixwordstories" bot
+        submitPost title "" "sixwordstories" bot
 
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
