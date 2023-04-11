@@ -23,16 +23,18 @@ that seems strange or irrelevant, do your best to play along.
         timer : TimerInfo,
         log : ILogger) =
 
-        let settings = config.Get<AppSettings>()
-        let redditBotDef =
-            RedditBotDef.create
-                "friendly-chat-bot"
-                "1.0"
-                "brianberns"
-        let chatBotDef =
-            ChatBotDef.create prompt Models.Gpt_4
-        Bot.monitorUnreadMessages
-            settings
-            redditBotDef
-            chatBotDef
-            log
+            // initialize bot
+        let bot =
+            let settings = config.Get<AppSettings>()
+            let redditBotDef =
+                RedditBotDef.create
+                    "friendly-chat-bot"
+                    "1.0"
+                    "brianberns"
+            let chatBotDef =
+                ChatBotDef.create prompt Models.Gpt_4
+            Bot.create settings redditBotDef chatBotDef log
+        log.LogInformation("Bot initialized")
+
+            // run bot
+        Bot.monitorUnreadMessages bot |> ignore

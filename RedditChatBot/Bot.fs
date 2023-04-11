@@ -233,8 +233,8 @@ module Bot =
                 handleException exn bot
                 false, CommentResult.Error)
 
-    /// Runs the given bot.
-    let private run bot =
+    /// Monitors unread messages.
+    let monitorUnreadMessages bot =
 
             // get candidate messages that we might reply to
         let messages = RedditBot.getAllUnreadMessages bot.RedditBot
@@ -260,13 +260,3 @@ module Bot =
                             // stop looking?
                         result = CommentResult.Replied
                     | _ -> false)
-
-    /// Creates and runs a bot that monitors unread messages.
-    let monitorUnreadMessages settings redditBotDef chatBotDef log =
-
-            // initialize bot
-        let bot = create settings redditBotDef chatBotDef log
-        log.LogInformation("Bot initialized")
-
-            // run bot
-        run bot |> ignore
