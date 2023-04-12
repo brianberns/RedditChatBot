@@ -14,8 +14,12 @@ type Startup() =
 
     /// Connects to Azure app configuration.
     override _.ConfigureAppConfiguration(builder) =
-        Environment.GetEnvironmentVariable("ConnectionString")
-            |> builder.ConfigurationBuilder.AddAzureAppConfiguration
+        let cs = Environment.GetEnvironmentVariable("ConnectionString")
+        if isNull cs then
+            failwith "ConnectionString environment variable must be set and point to an Azure app configuration"
+        builder
+            .ConfigurationBuilder
+            .AddAzureAppConfiguration(cs)
             |> ignore
 
     override _.Configure(_ : IFunctionsHostBuilder) =

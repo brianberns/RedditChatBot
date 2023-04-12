@@ -5,12 +5,12 @@ open System.Threading
 
 open Microsoft.Extensions.Logging
 
-open Reddit
 open Reddit.Controllers
 
-open OpenAI.GPT3.Managers
-
-/// Application settings.
+/// Application settings. The fields of this type should
+/// correspond to the keys of the Azure app configuration.
+/// E.g. Key "OpenAi:ApiKey" corresponds to field
+/// AppSettings.OpenAi.ApiKey.
 [<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
 type AppSettings =
     {
