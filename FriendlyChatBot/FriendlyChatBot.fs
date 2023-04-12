@@ -22,7 +22,8 @@ that seems strange or irrelevant, do your best to play along.
     let randomThoughtPrompt =
         """
 Generate a strange post for the /r/RandomThoughts subreddit.
-Specify the title with "Title:" and a one-sentence body with "Body:".
+The title must not be a question. Specify the title with
+"Title:" and a one-sentence body with "Body:".
         """
 
     /// Six word story prompt.
