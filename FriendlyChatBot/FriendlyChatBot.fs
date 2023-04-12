@@ -125,6 +125,6 @@ The title must not be a question. Specify the title with
         [<TimerTrigger("0 40 0 * * *")>]   // every day
         timer : TimerInfo,
         log : ILogger) =
-        createBot sixWordStoryPrompt Models.ChatGpt3_5Turbo log
+        createBot sixWordStoryPrompt Models.Gpt_4 log
             |> postSixWordStory
             |> ignore
