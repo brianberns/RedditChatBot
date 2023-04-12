@@ -111,7 +111,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 0 */3 * * *")>]   // every three hours
+        [<TimerTrigger("0 20 */3 * * *")>]   // every three hours
         timer : TimerInfo,
         log : ILogger) =
         createBot randomThoughtPrompt Models.ChatGpt3_5Turbo log
@@ -121,7 +121,7 @@ Specify the title with "Title:" and a one-sentence body with "Body:".
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
-        [<TimerTrigger("0 0 0 * * *")>]   // every day
+        [<TimerTrigger("0 40 0 * * *")>]   // every day
         timer : TimerInfo,
         log : ILogger) =
         createBot sixWordStoryPrompt Models.ChatGpt3_5Turbo log
