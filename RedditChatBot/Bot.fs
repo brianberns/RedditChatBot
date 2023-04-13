@@ -102,6 +102,7 @@ module Bot =
     /// Subreddits in which a bot can post autonomously.
     let private autonomousPostSubreddits =
         set [
+            "CrazyIdeas"
             "RandomThoughts"
             "sixwordstories"
             "testingground4bots"
