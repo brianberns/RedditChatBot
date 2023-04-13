@@ -21,17 +21,19 @@ that seems strange or irrelevant, do your best to play along.
     /// Random thought prompt.
     let randomThoughtPrompt =
         """
-Generate a strange post for the /r/RandomThoughts subreddit.
-The title must not be a question. Specify the title with
-"Title:" and a one-sentence body with "Body:".
+Generate a random thought for the /r/RandomThoughts subreddit.
+Specify the title with "Title:" and a one-sentence body with
+"Body:".
         """
 
     /// Six word story prompt.
     let sixWordStoryPrompt =
-        "Write a six word story with a twist ending"
+        """
+Generate a six-word story for the /r/sixwordstories subreddit.
+        """
 
     /// Creates a bot.
-    let createBot prompt model log =
+    let createBot prompt log =
         let settings = config.Get<AppSettings>()
         let redditBotDef =
             RedditBotDef.create
@@ -39,7 +41,7 @@ The title must not be a question. Specify the title with
                 "1.0"
                 "brianberns"
         let chatBotDef =
-            ChatBotDef.create prompt model
+            ChatBotDef.create prompt Models.Gpt_4
         let bot = Bot.create settings redditBotDef chatBotDef log
         log.LogInformation("Bot initialized")
         bot
@@ -97,7 +99,10 @@ The title must not be a question. Specify the title with
     /// Posts a six word story.
     let postSixWordStory bot =
         let title = ChatBot.complete [] bot.ChatBot
-        submitPost "sixwordstories" title "" bot
+        if title.Split(' ').Length = 6 then
+            submitPost "sixwordstories" title "" bot
+        else
+            failwith $"Not a six-word story: {title}"
 
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
@@ -105,26 +110,26 @@ The title must not be a question. Specify the title with
         [<TimerTrigger("0 */30 * * * *")>]   // twice an hour
         timer : TimerInfo,
         log : ILogger) =
-        createBot replyPrompt Models.Gpt_4 log
+        createBot replyPrompt log
             |> Bot.monitorUnreadMessages
             |> ignore
 
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 20 */3 * * *")>]   // every three hours
+        [<TimerTrigger("0 15 */6 * * *")>]   // every six hours
         timer : TimerInfo,
         log : ILogger) =
-        createBot randomThoughtPrompt Models.ChatGpt3_5Turbo log
+        createBot randomThoughtPrompt log
             |> postRandomThought
             |> ignore
 
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
-        [<TimerTrigger("0 40 0 * * *")>]   // every day
+        [<TimerTrigger("0 45 0 * * *")>]   // every day
         timer : TimerInfo,
         log : ILogger) =
-        createBot sixWordStoryPrompt Models.Gpt_4 log
+        createBot sixWordStoryPrompt log
             |> postSixWordStory
             |> ignore
