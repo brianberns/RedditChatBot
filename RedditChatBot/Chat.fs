@@ -111,7 +111,8 @@ module ChatBot =
                 |]
             ChatCompletionCreateRequest(
                 Messages = messages,
-                Model = bot.BotDef.Model)
+                Model = bot.BotDef.Model,
+                Temperature = 1.0f)
 
             // wait for the response (single-threaded, no point in getting fancy)
         let resp = bot.Client.ChatCompletion.CreateCompletion(req).Result
