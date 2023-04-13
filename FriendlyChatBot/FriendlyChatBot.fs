@@ -107,7 +107,7 @@ Generate a six-word story for the /r/sixwordstories subreddit.
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.MonitorUnreadMessages(
-        [<TimerTrigger("0 */30 * * * *")>]   // twice an hour
+        [<TimerTrigger("0 */30 * * * *")>]   // twice an hour at :00 and :30 after the hour
         timer : TimerInfo,
         log : ILogger) =
         createBot replyPrompt log
@@ -117,7 +117,7 @@ Generate a six-word story for the /r/sixwordstories subreddit.
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 15 */6 * * *")>]   // every six hours
+        [<TimerTrigger("0 15 */6 * * *")>]   // every six hours at :15 after the hour
         timer : TimerInfo,
         log : ILogger) =
         createBot randomThoughtPrompt log
@@ -127,7 +127,7 @@ Generate a six-word story for the /r/sixwordstories subreddit.
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
-        [<TimerTrigger("0 45 0 * * *")>]   // every day
+        [<TimerTrigger("0 45 0 * * *")>]     // every day at 00:45
         timer : TimerInfo,
         log : ILogger) =
         createBot sixWordStoryPrompt log
