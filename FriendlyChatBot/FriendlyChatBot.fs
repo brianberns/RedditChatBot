@@ -75,11 +75,11 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
             | _ -> failwith $"Unexpected number of parts: {parts}"
 
     /// # of retry attempts.
-    let nTries = 3
+    let numTries = 3
 
     /// Submits a post
     let submitPost subredditName title body bot =
-        Bot.tryN nTries (fun iTry ->
+        Bot.tryN numTries (fun iTry ->
             try
                 let post =
                     let subreddit =
@@ -93,7 +93,7 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
                 true, Some post
 
             with exn ->
-                bot.Log.LogError($"Error on post attempt #{iTry+1} of {nTries}")
+                bot.Log.LogError($"Error on post attempt #{iTry+1} of {numTries}")
                 Bot.handleException exn bot.Log
                 false, None)
 
@@ -104,11 +104,13 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
 
     /// Posts a six word story.
     let postSixWordStory bot =
-        let title = ChatBot.complete [] bot.ChatBot
-        if title.Split(' ').Length = 6 then
-            submitPost "sixwordstories" title "" bot
-        else
-            failwith $"Not a six-word story: {title}"
+        Bot.tryN numTries (fun _ ->
+            let title = ChatBot.complete [] bot.ChatBot
+            if title.Split(' ').Length = 6 then
+                true, submitPost "sixwordstories" title "" bot
+            else
+                bot.Log.LogError($"Not a six-word story: {title}")
+                false, None)
 
     /// Posts a crazy idea.
     let postCrazyIdea bot =
