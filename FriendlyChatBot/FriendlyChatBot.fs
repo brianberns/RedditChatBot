@@ -120,7 +120,7 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.MonitorUnreadMessages(
-        [<TimerTrigger("0 */30 * * * *")>]   // every 30 minutes at :00 and :30 after the hour
+        [<TimerTrigger("0 */30 * * * *")>]    // every 30 minutes at :00 and :30 after the hour
         timer : TimerInfo,
         log : ILogger) =
         createBot replyPrompt log
@@ -130,7 +130,7 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 10 */12 * * *")>]   // every twelve hours at :10 after the hour
+        [<TimerTrigger("0 15 0,12 * * *")>]   // twice a day at 00:15 and 12:15
         timer : TimerInfo,
         log : ILogger) =
         createBot randomThoughtPrompt log
@@ -140,7 +140,7 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
-        [<TimerTrigger("0 20 0 * * *")>]     // every day at 00:20
+        [<TimerTrigger("0 15 23 * * *")>]     // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
         createBot sixWordStoryPrompt log
@@ -150,7 +150,7 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
     /// Posts a crazy idea.
     [<FunctionName("PostCrazyIdea")>]
     member _.PostCrazyIdea(
-        [<TimerTrigger("0 40 */12 * * *")>]   // every twelve hours at :40 after the hour
+        [<TimerTrigger("0 15 1,13 * * *")>]   // twice a day at 01:15 and 13:15
         timer : TimerInfo,
         log : ILogger) =
         createBot crazyIdeaPrompt log
