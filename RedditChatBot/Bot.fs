@@ -104,6 +104,7 @@ module Bot =
         set [
             "CrazyIdeas"
             "RandomThoughts"
+            "Showerthoughts"
             "sixwordstories"
             "testingground4bots"
         ]
