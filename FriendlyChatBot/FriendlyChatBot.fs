@@ -13,6 +13,19 @@ module Post =
     /// # of retry attempts.
     let numTries = 3
 
+    /// Removes enclosing quotes, if any.
+    let removeEnclosingQuotes (str : string) =
+        let indexes =
+            [
+                for i = 0 to str.Length - 1 do
+                    if str[i] = '"' then
+                        yield i
+            ]
+        if indexes = [ 0; str.Length - 1 ] then
+            str.Substring(1, str.Length - 2)
+        else
+            str
+
     /// Submits a post
     let submit subredditName title body bot =
         Bot.tryN 3 (fun iTry ->
@@ -43,7 +56,9 @@ Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
 
     /// Posts a crazy idea.
     let post bot =
-        let title = ChatBot.complete [] bot.ChatBot
+        let title =
+            ChatBot.complete [] bot.ChatBot
+                |> Post.removeEnclosingQuotes
         Post.submit "CrazyIdeas" title "" bot
 
 module RandomThought =
