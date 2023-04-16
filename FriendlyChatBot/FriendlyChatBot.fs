@@ -74,7 +74,10 @@ Specify the title with "Title:" and a one-sentence body with
     /// Trims the given prefix from the given string.
     let private trimPrefix (prefix : string) (str : string) =
         if str.StartsWith(prefix) then
-            str.Substring(prefix.Length).Trim()
+            str
+                .Substring(prefix.Length)
+                .Trim()
+                |> Post.removeEnclosingQuotes
         else failwith $"Missing prefix \"{prefix}\" in \"{str}\""
 
     /// Creates a random thought.
@@ -109,7 +112,9 @@ Generate a six-word story for the /r/sixwordstories subreddit.
     /// Posts a six word story.
     let post bot =
         Bot.tryN Post.numTries (fun _ ->
-            let title = ChatBot.complete [] bot.ChatBot
+            let title =
+                ChatBot.complete [] bot.ChatBot
+                    |> Post.removeEnclosingQuotes
             if title.Split(' ').Length = 6 then
                 true, Post.submit "sixwordstories" title "" bot
             else
