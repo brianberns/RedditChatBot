@@ -98,21 +98,6 @@ Specify the title with "Title:" and a one-sentence body with
         let title, body = create bot
         Post.submit "RandomThoughts" title body bot
 
-module ShowerThought =
-
-    /// Shower thought prompt.
-    let prompt =
-        """
-Generate a one-sentence post for the /r/Showerthoughts subreddit.
-        """
-
-    /// Posts a shower thought.
-    let post bot =
-        let title =
-            ChatBot.complete [] bot.ChatBot
-                |> Post.removeEnclosingQuotes
-        Post.submit "Showerthoughts" title "" bot
-
 module SixWordStory =
 
     /// Six-word story prompt.
@@ -183,16 +168,6 @@ that seems strange or irrelevant, do your best to play along.
         log : ILogger) =
         createBot RandomThought.prompt log
             |> RandomThought.post
-            |> ignore
-
-    /// Posts a shower thought.
-    [<FunctionName("PostShowerThought")>]
-    member _.PostShowerThought(
-        [<TimerTrigger("0 15 2,14 * * *")>]   // twice a day at 02:15 and 14:15
-        timer : TimerInfo,
-        log : ILogger) =
-        createBot ShowerThought.prompt log
-            |> ShowerThought.post
             |> ignore
 
     /// Posts a six word story.
