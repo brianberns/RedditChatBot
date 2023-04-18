@@ -46,21 +46,6 @@ module Post =
                 Bot.handleException exn bot.Log
                 false, None)
 
-module CrazyIdea =
-
-    /// Crazy idea prompt.
-    let prompt =
-        """
-Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
-        """
-
-    /// Posts a crazy idea.
-    let post bot =
-        let title =
-            ChatBot.complete [] bot.ChatBot
-                |> Post.removeEnclosingQuotes
-        Post.submit "CrazyIdeas" title "" bot
-
 module RandomThought =
 
     /// Random thought prompt.
@@ -153,16 +138,6 @@ that seems strange or irrelevant, do your best to play along.
         log : ILogger) =
         createBot replyPrompt log
             |> Bot.monitorUnreadMessages
-            |> ignore
-
-    /// Posts a crazy idea.
-    [<FunctionName("PostCrazyIdea")>]
-    member _.PostCrazyIdea(
-        [<TimerTrigger("0 15 1,13 * * *")>]   // twice a day at 01:15 and 13:15
-        timer : TimerInfo,
-        log : ILogger) =
-        createBot CrazyIdea.prompt log
-            |> CrazyIdea.post
             |> ignore
 
     /// Posts a random thought.
