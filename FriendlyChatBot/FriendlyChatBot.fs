@@ -106,7 +106,7 @@ module SixWordStory =
     /// Six-word story prompt.
     let prompt =
         """
-Generate a six-word story for the /r/sixwordstories subreddit.
+Generate a funny six-word story for the /r/sixwordstories subreddit.
         """
 
     /// Posts a six word story.
