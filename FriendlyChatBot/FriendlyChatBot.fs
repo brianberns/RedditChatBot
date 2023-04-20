@@ -51,7 +51,7 @@ module CrazyIdea =
     /// Crazy idea prompt.
     let prompt =
         """
-Generate a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
+Write a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
         """
 
     /// Posts a crazy idea.
@@ -66,47 +66,22 @@ module RandomThought =
     /// Random thought prompt.
     let prompt =
         """
-Generate a random thought for the /r/RandomThoughts subreddit.
-Specify the title with "Title:" and a one-sentence body with
-"Body:".
+Write a one-sentence random thought with a twist for the /r/RandomThoughts subreddit.
         """
-
-    /// Trims the given prefix from the given string.
-    let private trimPrefix (prefix : string) (str : string) =
-        if str.StartsWith(prefix) then
-            str
-                .Substring(prefix.Length)
-                .Trim()
-                |> Post.removeEnclosingQuotes
-        else failwith $"Missing prefix \"{prefix}\" in \"{str}\""
-
-    /// Creates a random thought.
-    let private create bot =
-        let parts =
-            let completion = ChatBot.complete [] bot.ChatBot
-            completion.Split(
-                '\n',
-                StringSplitOptions.RemoveEmptyEntries)
-                |> Seq.map (fun part -> part.Trim())
-                |> Seq.toList
-        match parts with
-            | [ titlePart; bodyPart ] ->
-                let title = trimPrefix "Title:" titlePart
-                let body = trimPrefix "Body:" bodyPart
-                title, body
-            | _ -> failwith $"Unexpected number of parts: {parts}"
 
     /// Posts a random thought.
     let post bot =
-        let title, body = create bot
-        Post.submit "RandomThoughts" title body bot
+        let title =
+            ChatBot.complete [] bot.ChatBot
+                |> Post.removeEnclosingQuotes
+        Post.submit "RandomThoughts" title "" bot
 
 module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
         """
-Generate a funny six-word story for the /r/sixwordstories subreddit.
+Write a funny six-word story for the /r/sixwordstories subreddit.
         """
 
     /// Posts a six word story.
