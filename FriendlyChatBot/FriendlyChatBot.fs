@@ -56,10 +56,17 @@ Write a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
 
     /// Posts a crazy idea.
     let post bot =
-        let title =
-            ChatBot.complete [] bot.ChatBot
-                |> Post.removeEnclosingQuotes
-        Post.submit "RandomThoughts" title "" bot   // banned from /r/CrazyIdeas, so post to /r/RandomThoughts instead
+        Bot.tryN Post.numTries (fun _ ->
+            let title =
+                ChatBot.complete [] bot.ChatBot
+                    |> Post.removeEnclosingQuotes
+            let lower = title.ToLower()
+            if lower.Contains("politic")
+                || lower.Contains("god") then
+                bot.Log.LogError($"Not allowed: {title}")
+                false, None
+            else
+                true, Post.submit "RandomThoughts" title "" bot)   // banned from /r/CrazyIdeas, so post to /r/RandomThoughts instead
 
 module RandomThought =
 
