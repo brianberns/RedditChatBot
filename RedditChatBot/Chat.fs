@@ -115,7 +115,10 @@ module ChatBot =
                 Temperature = 1.0f)
 
             // wait for the response (single-threaded, no point in getting fancy)
-        let resp = bot.Client.ChatCompletion.CreateCompletion(req).Result
+        let resp =
+            bot.Client.ChatCompletion
+                .CreateCompletion(req)
+                .Result
         if resp.Successful then
             let choice = Seq.exactlyOne resp.Choices
             choice.Message.Content.Trim()                       // some responses start with whitespace - why?
