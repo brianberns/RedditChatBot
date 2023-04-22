@@ -25,7 +25,7 @@ that seems strange or irrelevant, do your best to play along.
                 "1.0"
                 "brianberns"
         let chatBotDef =
-            ChatBotDef.create prompt Models.Gpt_4
+            ChatBotDef.create prompt Models.ChatGpt3_5Turbo
         let bot = Bot.create settings redditBotDef chatBotDef log
         log.LogInformation("Bot initialized")
         bot

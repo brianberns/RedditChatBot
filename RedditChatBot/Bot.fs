@@ -39,6 +39,13 @@ type Bot =
 
 module Bot =
 
+    (*
+     * The Reddit.NET API presents a very leaky abstraction. As a
+     * general rule, we call Post.About() and Comment.Info()
+     * defensively to make sure we have the full details of a thing.
+     * (Unfortunately, Comment.About() seems to have a race condition.)
+     *)
+
     /// Creates a bot with the given values.
     let create settings redditBotDef chatBotDef log =
 
@@ -83,12 +90,11 @@ module Bot =
                 | _ -> text
         FChatMessage.create role content
 
-    (*
-     * The Reddit.NET API presents a very leaky abstraction. As a
-     * general rule, we call Post.About() and Comment.Info()
-     * defensively to make sure we have the full details of a thing.
-     * (Unfortunately, Comment.About() seems to have a race condition.)
-     *)
+    /// Creates a message describing the given subreddit.
+    let private getSubredditMessage subreddit =
+        FChatMessage.create
+            Role.User
+            $"Subreddit: {subreddit}"
 
     /// Converts the given post's content into a message.
     let private getPostMessage (post : SelfPost) bot =
@@ -140,6 +146,7 @@ module Bot =
                             autonomousPostSubreddits.Contains(post.Subreddit)
                         if isUserPost || isAutonomousSubreddit then
                             yield getPostMessage post bot
+                            yield getSubredditMessage post.Subreddit   // in reverse order
 
                     | _ -> ()
             ]
