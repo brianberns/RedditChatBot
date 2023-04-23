@@ -49,15 +49,38 @@ module RandomThought =
     /// Random thought prompt.
     let prompt =
         """
-Write a one-sentence thought to post on Reddit.
+Write three different one-sentence thoughts to post on Reddit, then
+indicate which one is most interesting. The format should be:
+
+1. $Thought
+2. $Thought
+3. $Thought
+Most interesting thought: $Thought
+
+Make no additional commentary.
         """
+
+    /// Tries to find the most interesting thought in the given
+    /// string.
+    let private tryFindMostInterestingThought (str : string) =
+        let prefix = "Most interesting thought:"
+        let idx = str.LastIndexOf(prefix)
+        if idx >= 0 then
+            str.Substring(prefix.Length).Trim() |> Some
+        else None
 
     /// Posts a random thought.
     let post bot =
-        let title =
-            ChatBot.complete [] bot.ChatBot
-                |> Post.removeEnclosingQuotes
-        Post.submit "RandomThoughts" title "" bot
+        Bot.tryN Post.numTries (fun _ ->
+            let completion =
+                ChatBot.complete [] bot.ChatBot
+                    |> Post.removeEnclosingQuotes
+            match tryFindMostInterestingThought completion with
+                | Some title ->
+                    true, Post.submit "RandomThoughts" title "" bot
+                | None ->
+                    bot.Log.LogError($"Couldn't find most interesting thought: {completion}")
+                    false, None)
 
 module SixWordStory =
 
