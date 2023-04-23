@@ -1,7 +1,5 @@
 ﻿namespace RedditChatBot
 
-open System
-
 open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
