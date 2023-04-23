@@ -46,21 +46,23 @@ module Post =
 
 module RandomThought =
 
+    /// Prefix of most interesting thought.
+    let private prefix = "Most interesting thought:"
+
     /// Random thought prompt.
     let prompt =
-        "Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. The format should be:
+        $"Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. The format should be:
 
 1. $Thought
 2. $Thought
 3. $Thought
-Most interesting thought: $Thought
+{prefix} $Thought
 
 Make no additional commentary."
 
     /// Tries to find the most interesting thought in the given
     /// string.
     let private tryFindMostInterestingThought (str : string) =
-        let prefix = "Most interesting thought:"
         let idx = str.LastIndexOf(prefix)
         if idx >= 0 then
             str.Substring(idx + prefix.Length).Trim() |> Some
