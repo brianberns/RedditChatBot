@@ -48,17 +48,14 @@ module RandomThought =
 
     /// Random thought prompt.
     let prompt =
-        """
-Write three different one-sentence thoughts to post on Reddit, then
-indicate which one is most interesting. The format should be:
+        "Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. The format should be:
 
 1. $Thought
 2. $Thought
 3. $Thought
 Most interesting thought: $Thought
 
-Make no additional commentary.
-        """
+Make no additional commentary."
 
     /// Tries to find the most interesting thought in the given
     /// string.
@@ -86,9 +83,7 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        """
-Write an amusing, intriguing six-word story.
-        """
+        "Write an amusing, intriguing six-word story."
 
     /// Posts a six word story.
     let post bot =
@@ -107,10 +102,7 @@ type FriendlyChatBot(config : IConfiguration) =
 
     /// Reply prompt.
     let replyPrompt =
-        """
-You are a friendly Reddit user. If you receive a comment
-that seems strange or irrelevant, do your best to play along.
-        """
+        "You are a friendly Reddit user. If you receive a comment that seems strange or irrelevant, do your best to play along."
 
     /// Creates a bot.
     let createBot prompt log =

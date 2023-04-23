@@ -23,17 +23,10 @@ type ChatBotDef =
 
 module ChatBotDef =
 
-    /// Fixes prompt whitespace.
-    let private fixPrompt (prompt : string) =
-        prompt
-            .Replace("\r", "")
-            .Replace("\n", " ")
-            .Trim()
-
     /// Creates a chat bot definition.
     let create prompt model =
         {
-            Prompt = fixPrompt prompt
+            Prompt = prompt
             Model = model
         }
 

@@ -7,9 +7,7 @@ open OpenAI.GPT3.ObjectModels
 module ChatTest =
 
     let prompt =
-        """
-Write an amusing, intriguing six-word story.
-        """
+        "Write an amusing, intriguing six-word story."
 
     let chatBot =
 

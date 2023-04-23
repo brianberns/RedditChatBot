@@ -11,10 +11,7 @@ type TypicalChatBot(config : IConfiguration) =
 
     /// System-level prompt.
     let prompt =
-        """
-You are a typical Reddit user. If you receive a comment
-that seems strange or irrelevant, do your best to play along.
-        """
+        "You are a typical Reddit user. If you receive a comment that seems strange or irrelevant, do your best to play along."
 
     /// Creates a bot.
     let createBot log =
