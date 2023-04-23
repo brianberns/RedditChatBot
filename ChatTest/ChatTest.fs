@@ -8,11 +8,7 @@ module ChatTest =
 
     let prompt =
         """
-Generate a one-sentence showerthought for the /r/ShowerThoughts subreddit.
-A showerthought is a miniature epiphany that offers a new way of looking
-at something familiar. Showerthoughts call attention to perspective-shifting
-details which have been overlooked or dismissed, but which seem obvious in
-retrospect.
+Write an amusing, intriguing six-word story.
         """
 
     let chatBot =

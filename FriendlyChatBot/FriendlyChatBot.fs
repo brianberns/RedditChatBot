@@ -51,7 +51,7 @@ module RandomThought =
     /// Random thought prompt.
     let prompt =
         """
-Write a one-sentence random thought for the /r/StonerThoughts subreddit.
+Write a one-sentence thought to post on Reddit.
         """
 
     /// Posts a random thought.
@@ -66,7 +66,7 @@ module SixWordStory =
     /// Six-word story prompt.
     let prompt =
         """
-Write a funny six-word story for the /r/sixwordstories subreddit.
+Write an amusing, intriguing six-word story.
         """
 
     /// Posts a six word story.
