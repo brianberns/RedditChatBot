@@ -46,34 +46,12 @@ module Post =
                 Bot.handleException exn bot.Log
                 false, None)
 
-module CrazyIdea =
-
-    /// Crazy idea prompt.
-    let prompt =
-        """
-Write a one-sentence crazy idea for the /r/CrazyIdeas subreddit.
-        """
-
-    /// Posts a crazy idea.
-    let post bot =
-        Bot.tryN Post.numTries (fun _ ->
-            let title =
-                ChatBot.complete [] bot.ChatBot
-                    |> Post.removeEnclosingQuotes
-            let lower = title.ToLower()
-            if lower.Contains("politic")
-                || lower.Contains("god") then
-                bot.Log.LogError($"Not allowed: {title}")
-                false, None
-            else
-                true, Post.submit "RandomThoughts" title "" bot)   // banned from /r/CrazyIdeas, so post to /r/RandomThoughts instead
-
 module RandomThought =
 
     /// Random thought prompt.
     let prompt =
         """
-Write a one-sentence random thought with a twist for the /r/RandomThoughts subreddit.
+Write a one-sentence random thought for the /r/StonerThoughts subreddit.
         """
 
     /// Posts a random thought.
@@ -137,20 +115,10 @@ that seems strange or irrelevant, do your best to play along.
             |> Bot.monitorUnreadMessages
             |> ignore
 
-    /// Posts a crazy idea.
-    [<FunctionName("PostCrazyIdea")>]
-    member _.PostCrazyIdea(
-        [<TimerTrigger("0 15 6,18 * * *")>]   // twice a day at 06:15 and 18:15
-        timer : TimerInfo,
-        log : ILogger) =
-        createBot CrazyIdea.prompt log
-            |> CrazyIdea.post
-            |> ignore
-
     /// Posts a random thought.
     [<FunctionName("PostRandomThought")>]
     member _.PostRandomThought(
-        [<TimerTrigger("0 15 0,12 * * *")>]   // twice a day at 00:15 and 12:15
+        [<TimerTrigger("0 15 0,6,12,18 * * *")>]   // four times a day at 00:15, 06:15, 12:15, and 18:15
         timer : TimerInfo,
         log : ILogger) =
         createBot RandomThought.prompt log
