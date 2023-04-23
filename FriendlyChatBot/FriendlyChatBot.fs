@@ -66,7 +66,7 @@ Make no additional commentary.
         let prefix = "Most interesting thought:"
         let idx = str.LastIndexOf(prefix)
         if idx >= 0 then
-            str.Substring(prefix.Length).Trim() |> Some
+            str.Substring(idx + prefix.Length).Trim() |> Some
         else None
 
     /// Posts a random thought.
