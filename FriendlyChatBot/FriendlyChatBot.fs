@@ -102,10 +102,10 @@ module Self =
         Bot.tryN Post.numTries (fun _ ->
             let completion = ChatBot.complete [] bot.ChatBot
             try
-                let post =
-                    JsonSerializer.Deserialize<Post>(completion)
+                let post = JsonSerializer.Deserialize<Post>(completion)
                 true, Post.submit "testingground4bots" post.Title post.Body bot
             with exn ->
+                bot.Log.LogError(completion)
                 Bot.handleException exn bot.Log
                 false, None)
 
