@@ -197,12 +197,13 @@ module Bot =
                         // obtain chat completion
                     let completion =
                         ChatBot.complete history bot.ChatBot
+                    bot.Log.LogInformation(completion)
                     
                         // submit reply
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
                         |> comment.Reply
                         |> ignore
-                    bot.Log.LogInformation($"Comment submitted: {completion}")
+                    bot.Log.LogInformation("Comment submitted")
                     CommentResult.Replied
 
                 else CommentResult.Ignored
