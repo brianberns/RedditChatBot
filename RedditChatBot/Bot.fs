@@ -202,7 +202,7 @@ module Bot =
                     if completion = "" then "#" else completion   // Reddit requires a non-empty string
                         |> comment.Reply
                         |> ignore
-                    bot.Log.LogInformation("Comment submitted")
+                    bot.Log.LogInformation($"Comment submitted: {completion}")
                     CommentResult.Replied
 
                 else CommentResult.Ignored

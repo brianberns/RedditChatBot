@@ -74,6 +74,7 @@ Make no additional commentary."
             let completion =
                 ChatBot.complete [] bot.ChatBot
                     |> Post.removeEnclosingQuotes
+            bot.Log.LogInformation($"Full completion: {completion}")
             match tryFindMostInterestingThought completion with
                 | Some title ->
                     true, Post.submit "RandomThoughts" title "" bot
