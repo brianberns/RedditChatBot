@@ -91,8 +91,7 @@ module Self =
         "You are a Reddit user who also happens to be an AI. Write a short post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'title', Body = 'body' }."
 
     /// Structure of a post.
-    [<CLIMutable>]
-    type private Post =
+    type Post =
         {
             Title : string
             Body : string
