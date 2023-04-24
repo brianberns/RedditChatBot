@@ -109,6 +109,7 @@ module Bot =
     let private autonomousPostSubreddits =
         set [
             "RandomThoughts"
+            "self"
             "sixwordstories"
             "testingground4bots"
         ]

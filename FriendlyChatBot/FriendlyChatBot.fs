@@ -1,5 +1,7 @@
 ﻿namespace RedditChatBot
 
+open System.Text.Json
+
 open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
@@ -82,6 +84,31 @@ Make no additional commentary."
                     bot.Log.LogError($"Couldn't find most interesting thought: {completion}")
                     false, None)
 
+module Self =
+
+    /// Self prompt.
+    let prompt =
+        "You are a well-adjusted Reddit user, who also happens to be an AI. Write a post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'title', Body = 'body' }."
+
+    /// Structure of a post.
+    type private Post =
+        {
+            Title : string
+            Body : string
+        }
+
+    /// Posts to /r/self.
+    let post bot =
+        Bot.tryN Post.numTries (fun _ ->
+            let completion = ChatBot.complete [] bot.ChatBot
+            try
+                let post =
+                    JsonSerializer.Deserialize<Post>(completion)
+                true, Post.submit "testingground4bots" post.Title post.Body bot
+            with exn ->
+                Bot.handleException exn bot.Log
+                false, None)
+
 module SixWordStory =
 
     /// Six-word story prompt.
@@ -124,7 +151,7 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Monitors unread messages.
     [<FunctionName("MonitorUnreadMessages")>]
     member _.MonitorUnreadMessages(
-        [<TimerTrigger("0 */30 * * * *")>]    // every 30 minutes at :00 and :30 after the hour
+        [<TimerTrigger("0 */30 * * * *")>]         // every 30 minutes at :00 and :30 after the hour
         timer : TimerInfo,
         log : ILogger) =
         createBot replyPrompt log
@@ -141,10 +168,20 @@ type FriendlyChatBot(config : IConfiguration) =
             |> RandomThought.post
             |> ignore
 
+    /// Posts to /r/self.
+    [<FunctionName("PostSelf")>]
+    member _.PostSelf(
+        [<TimerTrigger("0 15 1 * * *")>]           // once a day at 01:15
+        timer : TimerInfo,
+        log : ILogger) =
+        createBot SixWordStory.prompt log
+            |> SixWordStory.post
+            |> ignore
+
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
-        [<TimerTrigger("0 15 23 * * *")>]     // once a day at 23:15
+        [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
         createBot SixWordStory.prompt log
