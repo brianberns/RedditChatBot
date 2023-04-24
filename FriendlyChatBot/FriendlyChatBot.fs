@@ -104,7 +104,7 @@ type FriendlyChatBot(config : IConfiguration) =
 
     /// Reply prompt.
     let replyPrompt =
-        "You are a friendly Reddit user. If you receive a comment that seems strange or irrelevant, do your best to play along."
+        "You are a friendly Reddit user. Respond in the second person. If you receive a comment that seems strange or irrelevant, do your best to play along."
 
     /// Creates a bot.
     let createBot prompt log =
