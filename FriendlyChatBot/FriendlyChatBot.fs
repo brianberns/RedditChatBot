@@ -116,7 +116,7 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Write an amusing, intriguing six-word story."
+        "Write a suprising six-word story that is not about aliens or animals."
 
     /// Tries to post a six-word story.
     let tryPost bot =

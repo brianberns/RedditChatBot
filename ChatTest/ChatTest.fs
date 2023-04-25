@@ -7,7 +7,7 @@ open OpenAI.GPT3.ObjectModels
 module ChatTest =
 
     let prompt =
-        "Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Output as JSON: { Thought1 = 'thought', Thought2 = 'thought', Thought3 = 'thought', MostInterestingThought = 'thought' }."
+        "Write a suprising six-word story that is not about aliens or animals."
 
     let chatBot =
 
