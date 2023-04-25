@@ -88,7 +88,7 @@ module Self =
 
     /// Self prompt.
     let prompt =
-        "You are a Reddit user who also happens to be an AI. Write a short post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'title', Body = 'body' }."
+        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'title', Body = 'body' }."
 
     /// Structure of a post.
     type Post =
@@ -103,7 +103,7 @@ module Self =
             let completion = ChatBot.complete [] bot.ChatBot
             try
                 let post = JsonSerializer.Deserialize<Post>(completion)
-                true, Post.submit "testingground4bots" post.Title post.Body bot
+                true, Post.submit "self" post.Title post.Body bot
             with exn ->
                 bot.Log.LogError(completion)
                 Bot.handleException exn bot.Log
@@ -168,6 +168,7 @@ type FriendlyChatBot(config : IConfiguration) =
             |> RandomThought.post
             |> ignore
 
+    (*
     /// Posts to /r/self.
     [<FunctionName("PostSelf")>]
     member _.PostSelf(
@@ -177,6 +178,7 @@ type FriendlyChatBot(config : IConfiguration) =
         createBot Self.prompt log
             |> Self.post
             |> ignore
+    *)
 
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
