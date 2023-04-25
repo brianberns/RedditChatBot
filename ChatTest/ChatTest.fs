@@ -7,7 +7,7 @@ open OpenAI.GPT3.ObjectModels
 module ChatTest =
 
     let prompt =
-        "Write an amusing, intriguing six-word story."
+        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title using sentence-style capitalization', Body = 'Body' }."
 
     let chatBot =
 
@@ -19,7 +19,7 @@ module ChatTest =
                 .Build()
                 .Get<AppSettings>()
 
-        let botDef = ChatBotDef.create prompt Models.Gpt_4
+        let botDef = ChatBotDef.create prompt Models.ChatGpt3_5Turbo
 
         ChatBot.create settings.OpenAi botDef
 

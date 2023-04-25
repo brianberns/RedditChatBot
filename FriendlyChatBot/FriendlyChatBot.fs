@@ -88,7 +88,7 @@ module Self =
 
     /// Self prompt.
     let prompt =
-        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'title', Body = 'body' }."
+        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title using sentence-style capitalization', Body = 'Body' }."
 
     /// Structure of a post.
     type Post =
