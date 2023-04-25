@@ -48,41 +48,37 @@ module Post =
 
 module RandomThought =
 
-    /// Prefix of most interesting thought.
-    let private prefix = "Most interesting thought:"
-
     /// Random thought prompt.
     let prompt =
-        $"Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. The format should be:
+        "Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Output as JSON: { Thought1 = 'thought', Thought2 = 'thought', Thought3 = 'thought', MostInterestingThought = 'thought' }."
 
-1. $Thought
-2. $Thought
-3. $Thought
-{prefix} $Thought
+    /// Structure of a completion.
+    type Completion =
+        {
+            Thought1 : string
+            Thought2 : string
+            Thought3 : string
+            MostInterestingThought : string
+        }
 
-Make no additional commentary."
-
-    /// Tries to find the most interesting thought in the given
-    /// string.
-    let private tryFindMostInterestingThought (str : string) =
-        let idx = str.LastIndexOf(prefix)
-        if idx >= 0 then
-            str.Substring(idx + prefix.Length).Trim() |> Some
-        else None
-
-    /// Posts a random thought.
-    let post bot =
+    /// Tries to post a random thought.
+    let tryPost bot =
         Bot.tryN Post.numTries (fun _ ->
-            let completion =
-                ChatBot.complete [] bot.ChatBot
-                    |> Post.removeEnclosingQuotes
-            bot.Log.LogInformation(completion)
-            match tryFindMostInterestingThought completion with
-                | Some title ->
-                    true, Post.submit "RandomThoughts" title "" bot
-                | None ->
-                    bot.Log.LogError($"Couldn't find most interesting thought: {completion}")
-                    false, None)
+            let json = ChatBot.complete [] bot.ChatBot
+            try
+                let postOpt =
+                    let completion =
+                        JsonSerializer.Deserialize<Completion>(json)
+                    Post.submit
+                        "RandomThoughts"
+                        completion.MostInterestingThought
+                        ""
+                        bot
+                true, postOpt
+            with exn ->
+                bot.Log.LogError(json)
+                Bot.handleException exn bot.Log
+                false, None)
 
 module Self =
 
@@ -90,22 +86,29 @@ module Self =
     let prompt =
         "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title using sentence-style capitalization', Body = 'Body' }."
 
-    /// Structure of a post.
-    type Post =
+    /// Structure of a completion.
+    type Completion =
         {
             Title : string
             Body : string
         }
 
-    /// Posts to /r/self.
-    let post bot =
+    /// Tries to post to /r/self.
+    let tryPost bot =
         Bot.tryN Post.numTries (fun _ ->
-            let completion = ChatBot.complete [] bot.ChatBot
+            let json = ChatBot.complete [] bot.ChatBot
             try
-                let post = JsonSerializer.Deserialize<Post>(completion)
-                true, Post.submit "self" post.Title post.Body bot
+                let postOpt =
+                    let completion =
+                        JsonSerializer.Deserialize<Completion>(json)
+                    Post.submit
+                        "self"
+                        completion.Title
+                        completion.Body
+                        bot
+                true, postOpt
             with exn ->
-                bot.Log.LogError(completion)
+                bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
                 false, None)
 
@@ -115,8 +118,8 @@ module SixWordStory =
     let prompt =
         "Write an amusing, intriguing six-word story."
 
-    /// Posts a six word story.
-    let post bot =
+    /// Tries to post a six-word story.
+    let tryPost bot =
         Bot.tryN Post.numTries (fun _ ->
             let title =
                 ChatBot.complete [] bot.ChatBot
@@ -165,10 +168,9 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         createBot RandomThought.prompt log
-            |> RandomThought.post
+            |> RandomThought.tryPost
             |> ignore
 
-    (*
     /// Posts to /r/self.
     [<FunctionName("PostSelf")>]
     member _.PostSelf(
@@ -176,9 +178,8 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         createBot Self.prompt log
-            |> Self.post
+            |> Self.tryPost
             |> ignore
-    *)
 
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
@@ -187,5 +188,5 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         createBot SixWordStory.prompt log
-            |> SixWordStory.post
+            |> SixWordStory.tryPost
             |> ignore
