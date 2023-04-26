@@ -80,38 +80,6 @@ module RandomThought =
                 Bot.handleException exn bot.Log
                 false, None)
 
-module Self =
-
-    /// Self prompt.
-    let prompt =
-        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title', Body = 'Body' }. Using sentence-style capitalization for the title."
-
-    /// Structure of a completion.
-    type Completion =
-        {
-            Title : string
-            Body : string
-        }
-
-    /// Tries to post to /r/self.
-    let tryPost bot =
-        Bot.tryN Post.numTries (fun _ ->
-            let json = ChatBot.complete [] bot.ChatBot
-            try
-                let postOpt =
-                    let completion =
-                        JsonSerializer.Deserialize<Completion>(json)
-                    Post.submit
-                        "self"
-                        completion.Title
-                        completion.Body
-                        bot
-                true, postOpt
-            with exn ->
-                bot.Log.LogError(json)
-                Bot.handleException exn bot.Log
-                false, None)
-
 module SixWordStory =
 
     /// Six-word story prompt.
@@ -169,16 +137,6 @@ type FriendlyChatBot(config : IConfiguration) =
         log : ILogger) =
         createBot RandomThought.prompt log
             |> RandomThought.tryPost
-            |> ignore
-
-    /// Posts to /r/self.
-    [<FunctionName("PostSelf")>]
-    member _.PostSelf(
-        [<TimerTrigger("0 15 1 * * *")>]           // once a day at 01:15
-        timer : TimerInfo,
-        log : ILogger) =
-        createBot Self.prompt log
-            |> Self.tryPost
             |> ignore
 
     /// Posts a six word story.
