@@ -258,7 +258,10 @@ module Bot =
 
             // get candidate messages that we might reply to
         let messages = RedditBot.getAllUnreadMessages bot.RedditBot
-        bot.Log.LogInformation($"{messages.Length} unread message(s) found")
+        let logger =
+            if messages.Length > 0 then bot.Log.LogWarning
+            else bot.Log.LogError
+        logger $"{messages.Length} unread message(s) found"
 
             // reply to no more than one message
         messages
