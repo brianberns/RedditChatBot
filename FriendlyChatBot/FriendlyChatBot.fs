@@ -84,7 +84,7 @@ module Self =
 
     /// Self prompt.
     let prompt =
-        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title using sentence-style capitalization', Body = 'Body' }."
+        "You are a Reddit user who also happens to be an AI. Write a short, light-hearted post for the /r/self subreddit on any topic you like. Output as JSON: { Title = 'Title', Body = 'Body' }. Using sentence-style capitalization for the title."
 
     /// Structure of a completion.
     type Completion =
