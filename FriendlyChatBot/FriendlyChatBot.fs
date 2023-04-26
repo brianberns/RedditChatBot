@@ -38,7 +38,7 @@ module Post =
                     subreddit
                         .SelfPost(title, body)
                         .Submit()
-                bot.Log.LogInformation($"Post submitted: {title}")
+                bot.Log.LogWarning($"Post submitted: {title}")   // use warning for emphasis in log
                 true, Some post
 
             with exn ->
