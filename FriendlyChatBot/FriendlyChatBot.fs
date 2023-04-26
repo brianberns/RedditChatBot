@@ -13,19 +13,6 @@ module Post =
     /// # of retry attempts.
     let numTries = 3
 
-    /// Removes enclosing quotes, if any.
-    let removeEnclosingQuotes (str : string) =
-        let indexes =
-            [
-                for i = 0 to str.Length - 1 do
-                    if str[i] = '"' then
-                        yield i
-            ]
-        if indexes = [ 0; str.Length - 1 ] then
-            str.Substring(1, str.Length - 2)
-        else
-            str
-
     /// Submits a post
     let submit subredditName title body bot =
         Bot.tryN 3 (fun iTry ->
@@ -50,7 +37,7 @@ module RandomThought =
 
     /// Random thought prompt.
     let prompt =
-        "Write three different one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Avoid politics and religion. Output as JSON: { Thought1 = 'thought', Thought2 = 'thought', Thought3 = 'thought', MostInterestingThought = 'thought' }."
+        "Write three one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Avoid politics and religion. Output as JSON: { Thought1 = 'thought', Thought2 = 'thought', Thought3 = 'thought', MostInterestingThought = 'thought' }."
 
     /// Structure of a completion.
     type Completion =
@@ -66,15 +53,11 @@ module RandomThought =
         Bot.tryN Post.numTries (fun _ ->
             let json = ChatBot.complete [] bot.ChatBot
             try
-                let postOpt =
-                    let completion =
-                        JsonSerializer.Deserialize<Completion>(json)
-                    Post.submit
-                        "RandomThoughts"
-                        completion.MostInterestingThought
-                        ""
-                        bot
-                true, postOpt
+                let thought =
+                    JsonSerializer
+                        .Deserialize<Completion>(json)
+                        .MostInterestingThought
+                true, Post.submit "RandomThoughts" thought "" bot
             with exn ->
                 bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
@@ -84,18 +67,35 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Write a suprising six-word story that is not about aliens or animals."
+        "Write three suprising six-word stories, then indicate which one is the most interesting. Avoid aliens and animals. Output as JSON: { Story1 = 'story', Story2 = 'story', Story3 = 'story', MostInterestingStory = 'story' }."
+
+    /// Structure of a completion.
+    type Completion =
+        {
+            Story1 : string
+            Story2 : string
+            Story3 : string
+            MostInterestingStory : string
+        }
 
     /// Tries to post a six-word story.
     let tryPost bot =
         Bot.tryN Post.numTries (fun _ ->
-            let title =
+            let json =
                 ChatBot.complete [] bot.ChatBot
-                    |> Post.removeEnclosingQuotes
-            if title.Split(' ').Length = 6 then
-                true, Post.submit "sixwordstories" title "" bot
-            else
-                bot.Log.LogError($"Not a six-word story: {title}")
+            try
+                let story =
+                    JsonSerializer
+                        .Deserialize<Completion>(json)
+                        .MostInterestingStory
+                if story.Split(' ').Length = 6 then
+                    true, Post.submit "sixwordstories" story "" bot
+                else
+                    bot.Log.LogError($"Not a six-word story: {story}")
+                    false, None
+            with exn ->
+                bot.Log.LogError(json)
+                Bot.handleException exn bot.Log
                 false, None)
 
 /// Azure function type for dependency injection.
