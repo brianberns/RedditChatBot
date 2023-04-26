@@ -203,9 +203,7 @@ module Bot =
                     let body =
                         if completion = "" then "#"   // Reddit requires a non-empty string
                         else completion
-                    body
-                        |> comment.Reply
-                        |> ignore
+                    comment.Reply(body) |> ignore
                     bot.Log.LogWarning($"Comment submitted: {body}")   // use warning for emphasis in log
                     CommentResult.Replied
 
