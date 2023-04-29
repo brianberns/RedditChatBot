@@ -106,18 +106,17 @@ module Bot =
         ]
 
     /// Creates messages describing the given subreddit.
-    let private getSubredditMessage subreddit =
-        FChatMessage.create
-            Role.User
-            $"Subreddit: {subreddit}"
+    let private getSubredditMessages subreddit =
+        seq {
+            yield FChatMessage.create
+                Role.User
+                $"Subreddit: {subreddit}"
 
-    /// Creates zeor or more messages describing the given
-    /// subreddit.
-    let private getSubredditInfoMessages subreddit =
-        subredditInfoMap
-            |> Map.tryFind subreddit
-            |> Option.map (FChatMessage.create Role.User)
-            |> Option.toArray
+            match Map.tryFind subreddit subredditInfoMap with
+                | Some info ->
+                    yield FChatMessage.create Role.User info
+                | None -> ()
+        }
 
     /// Converts the given post's content into a message.
     let private getPostMessage (post : SelfPost) bot =
@@ -159,11 +158,11 @@ module Bot =
                         let isAutonomousSubreddit =
                             autonomousPostSubreddits.Contains(post.Subreddit)
 
-                            // in reverse order
                         if isUserPost || isAutonomousSubreddit then
-                            yield getPostMessage post bot
-                            yield! getSubredditInfoMessages post.Subreddit
-                            yield getSubredditMessage post.Subreddit
+                            yield! List.rev [   // will be unreversed at the end
+                                yield! getSubredditMessages post.Subreddit
+                                yield getPostMessage post bot
+                            ]
 
                     | _ -> ()
             ]
