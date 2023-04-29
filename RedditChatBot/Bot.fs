@@ -107,14 +107,14 @@ module Bot =
 
     /// Creates messages describing the given subreddit.
     let private getSubredditMessages subreddit =
+        let createMsg = FChatMessage.create Role.User
         seq {
-            yield FChatMessage.create
-                Role.User
-                $"Subreddit: {subreddit}"
+                // subreddit name
+            yield createMsg $"Subreddit: {subreddit}"
 
+                // additional info?
             match Map.tryFind subreddit subredditInfoMap with
-                | Some info ->
-                    yield FChatMessage.create Role.User info
+                | Some info -> yield createMsg info
                 | None -> ()
         }
 
