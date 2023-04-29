@@ -90,11 +90,34 @@ module Bot =
                 | _ -> text
         FChatMessage.create role content
 
-    /// Creates a message describing the given subreddit.
+    /// Subreddits in which a bot can post autonomously.
+    let private autonomousPostSubreddits =
+        set [
+            "RandomThoughts"
+            "self"
+            "sixwordstories"
+            "testingground4bots"
+        ]
+
+    /// Additional subreddit information.
+    let private subredditInfoMap =
+        Map [
+            "sixwordstories", "It is customary, but not mandatory, to write a six-word response."
+        ]
+
+    /// Creates messages describing the given subreddit.
     let private getSubredditMessage subreddit =
         FChatMessage.create
             Role.User
             $"Subreddit: {subreddit}"
+
+    /// Creates zeor or more messages describing the given
+    /// subreddit.
+    let private getSubredditInfoMessages subreddit =
+        subredditInfoMap
+            |> Map.tryFind subreddit
+            |> Option.map (FChatMessage.create Role.User)
+            |> Option.toArray
 
     /// Converts the given post's content into a message.
     let private getPostMessage (post : SelfPost) bot =
@@ -104,15 +127,6 @@ module Bot =
             else
                 post.Title
         createChatMessage post.Author content bot
-
-    /// Subreddits in which a bot can post autonomously.
-    let private autonomousPostSubreddits =
-        set [
-            "RandomThoughts"
-            "self"
-            "sixwordstories"
-            "testingground4bots"
-        ]
 
     /// Gets ancestor comments in chronological order.
     let private getHistory comment bot : ChatHistory =
@@ -144,9 +158,12 @@ module Bot =
                         let isUserPost = getRole post.Author bot = Role.User
                         let isAutonomousSubreddit =
                             autonomousPostSubreddits.Contains(post.Subreddit)
+
+                            // in reverse order
                         if isUserPost || isAutonomousSubreddit then
                             yield getPostMessage post bot
-                            yield getSubredditMessage post.Subreddit   // in reverse order
+                            yield! getSubredditInfoMessages post.Subreddit
+                            yield getSubredditMessage post.Subreddit
 
                     | _ -> ()
             ]
