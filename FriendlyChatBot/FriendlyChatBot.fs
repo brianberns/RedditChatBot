@@ -67,7 +67,7 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Write three six-word stories, then indicate which one is the most interesting. Avoid aliens, amnesia, animals, funerals, invisibility, and time travel. Output as JSON: { Story1 = 'story', Story2 = 'story', Story3 = 'story', MostInterestingStory = 'story' }."
+        "Write three six-word stories, then indicate which one is the most interesting. Avoid aliens, amnesia, animals, funerals, hidden worlds, invisibility, and time travel. Output as JSON: { Story1 = 'story', Story2 = 'story', Story3 = 'story', MostInterestingStory = 'story' }."
 
     /// Structure of a completion.
     type Completion =
