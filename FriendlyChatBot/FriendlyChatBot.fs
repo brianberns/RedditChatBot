@@ -37,7 +37,7 @@ module RandomThought =
 
     /// Random thought prompt.
     let prompt =
-        "Write three one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Avoid politics, religion, and time travel. Output as JSON: { Thought1 = 'thought', Thought2 = 'thought', Thought3 = 'thought', MostInterestingThought = 'thought' }."
+        "Write three one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Avoid politics, religion, and time travel. Output as JSON: { \"Thought1\" : \"thought\", \"Thought2\" : \"thought\", \"Thought3\" : \"thought\", \"MostInterestingThought\" : \"thought\" }."
 
     /// Structure of a completion.
     type Completion =
@@ -67,7 +67,7 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Write three six-word stories, then indicate which one is the most interesting. Avoid aliens, amnesia, animals, funerals, hidden worlds, invisibility, and time travel. Output as JSON: { Story1 = 'story', Story2 = 'story', Story3 = 'story', MostInterestingStory = 'story' }."
+        "Write three six-word stories, then indicate which one is the most interesting. Avoid aliens, amnesia, animals, funerals, hidden worlds, invisibility, and time travel. Output as JSON: { \"Story1\" : \"story\", \"Story2\" : \"story\", \"Story3\" : \"story\", \"MostInterestingStory\" : \"story\" }."
 
     /// Structure of a completion.
     type Completion =
