@@ -7,7 +7,7 @@ open OpenAI.GPT3.ObjectModels
 module ChatTest =
 
     let prompt =
-        "Write a suprising six-word story that is not about aliens or animals."
+        "Write a six-word story that invites commentary."
 
     let chatBot =
 
@@ -19,7 +19,7 @@ module ChatTest =
                 .Build()
                 .Get<AppSettings>()
 
-        let botDef = ChatBotDef.create prompt Models.ChatGpt3_5Turbo
+        let botDef = ChatBotDef.create prompt Models.Gpt_4
 
         ChatBot.create settings.OpenAi botDef
 
