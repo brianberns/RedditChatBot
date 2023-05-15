@@ -37,15 +37,13 @@ module RandomThought =
 
     /// Random thought prompt.
     let prompt =
-        "Write three one-sentence thoughts to post on Reddit, then indicate which one is most interesting. Avoid politics, religion, and time travel. Output as JSON: { \"Thought1\" : \"thought\", \"Thought2\" : \"thought\", \"Thought3\" : \"thought\", \"MostInterestingThought\" : \"thought\" }."
+        "Choose a random noun, then write a one-sentence thought about it to post on Reddit. The thought should be in the form of a statement, not a question. Output as JSON: { \"Noun\" : string, \"Thought\" : string }."
 
     /// Structure of a completion.
     type Completion =
         {
-            Thought1 : string
-            Thought2 : string
-            Thought3 : string
-            MostInterestingThought : string
+            Noun : string
+            Thought : string
         }
 
     /// Tries to post a random thought.
@@ -53,11 +51,10 @@ module RandomThought =
         Bot.tryN Post.numTries (fun _ ->
             let json = ChatBot.complete [] bot.ChatBot
             try
-                let thought =
-                    JsonSerializer
-                        .Deserialize<Completion>(json)
-                        .MostInterestingThought
-                true, Post.submit "RandomThoughts" thought "" bot
+                let completion =
+                    JsonSerializer.Deserialize<Completion>(json)
+                bot.Log.LogWarning($"Noun: {completion.Noun}")
+                true, Post.submit "RandomThoughts" completion.Thought "" bot
             with exn ->
                 bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
@@ -67,15 +64,13 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Write three six-word stories, then indicate which one is the most interesting. Avoid aliens, amnesia, animals, funerals, invisibility, secrets, and time travel. Output as JSON: { \"Story1\" : \"story\", \"Story2\" : \"story\", \"Story3\" : \"story\", \"MostInterestingStory\" : \"story\" }."
+        "Choose a random noun, then write a six-word story about it. Output as JSON: { \"Noun\" : string, \"Story\" : string }."
 
     /// Structure of a completion.
     type Completion =
         {
-            Story1 : string
-            Story2 : string
-            Story3 : string
-            MostInterestingStory : string
+            Noun : string
+            Story : string
         }
 
     /// Tries to post a six-word story.
@@ -84,14 +79,13 @@ module SixWordStory =
             let json =
                 ChatBot.complete [] bot.ChatBot
             try
-                let story =
-                    JsonSerializer
-                        .Deserialize<Completion>(json)
-                        .MostInterestingStory
-                if story.Split(' ').Length = 6 then
-                    true, Post.submit "sixwordstories" story "" bot
+                let completion =
+                    JsonSerializer.Deserialize<Completion>(json)
+                bot.Log.LogWarning($"Noun: {completion.Noun}")
+                if completion.Story.Split(' ').Length = 6 then
+                    true, Post.submit "sixwordstories" completion.Story "" bot
                 else
-                    bot.Log.LogError($"Not a six-word story: {story}")
+                    bot.Log.LogError($"Not a six-word story: {completion.Story}")
                     false, None
             with exn ->
                 bot.Log.LogError(json)
