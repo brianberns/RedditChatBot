@@ -38,7 +38,7 @@ module RandomThought =
 
     /// Random thought prompt.
     let prompt =
-        $"Using random seed {DateTime.Now.Ticks % 1000000L}, write a one-sentence random thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
+        $"Using random seed {DateTime.Now.Ticks % 1000000L}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
 
     /// Structure of a completion.
     type Completion = { Thought : string }
