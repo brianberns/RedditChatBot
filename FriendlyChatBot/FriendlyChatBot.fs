@@ -59,14 +59,10 @@ module SixWordStory =
 
     /// Six-word story prompt.
     let prompt =
-        "Choose a random noun, then write a six-word story about it. Output as JSON: { \"Noun\" : string, \"Story\" : string }."
+        "Write a six-word story to post on Reddit. Output as JSON: { \"Story\" : string }."
 
     /// Structure of a completion.
-    type Completion =
-        {
-            Noun : string
-            Story : string
-        }
+    type Completion = { Story : string }
 
     /// Tries to post a six-word story.
     let tryPost bot =
@@ -76,7 +72,6 @@ module SixWordStory =
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                bot.Log.LogWarning($"Noun: {completion.Noun}")
                 if completion.Story.Split(' ').Length = 6 then
                     true, Post.submit "sixwordstories" completion.Story "" bot
                 else
