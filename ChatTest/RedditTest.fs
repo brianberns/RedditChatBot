@@ -38,9 +38,12 @@ module RedditTest =
         for message in messages do
             let post = getPost message.ParentId
             printfn ""
+            printfn "**********************************************"
+            printfn ""
             printfn $"{message.Body}"
-            printfn $"{message.CreatedUTC.ToLocalTime()}"
-            printfn $"Score: {message.Score}"
-            printfn $"{post.Title}"
-            printfn $"https://www.reddit.com{message.Context}"
-            printfn $"{message.Author}"
+            printfn ""
+            printfn $"- Post: {post.Title}"
+            printfn $"- Author: {message.Author}"
+            printfn $"- Time: {message.CreatedUTC.ToLocalTime()}"
+            printfn $"- Score: {message.Score}"
+            printfn $"- Link: https://www.reddit.com{message.Context}"
