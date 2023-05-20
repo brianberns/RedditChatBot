@@ -135,7 +135,7 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
-        let prompt = RandomThought.getPrompt log
+        let prompt = SixWordStory.getPrompt log
         createBot prompt log
             |> SixWordStory.tryPost
             |> ignore
