@@ -64,7 +64,7 @@ module SixWordStory =
     let getPrompt (log : ILogger) =
         let seed = DateTime.Now.Ticks % 1000000L
         log.LogWarning($"Seed: {seed}")
-        $"Using random seed {DateTime.Now.Ticks % 1000000L}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
+        $"Using random seed {seed}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion.
     type Completion = { Story : string }
