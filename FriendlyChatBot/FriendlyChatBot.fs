@@ -37,8 +37,10 @@ module Post =
 module RandomThought =
 
     /// Random thought prompt.
-    let prompt =
-        $"Using random seed {DateTime.Now.Ticks % 1000000L}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
+    let getPrompt (log : ILogger) =
+        let seed = DateTime.Now.Ticks % 1000000L
+        log.LogWarning($"Seed: {seed}")
+        $"Using random seed {seed}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
 
     /// Structure of a completion.
     type Completion = { Thought : string }
@@ -59,7 +61,9 @@ module RandomThought =
 module SixWordStory =
 
     /// Six-word story prompt.
-    let prompt =
+    let getPrompt (log : ILogger) =
+        let seed = DateTime.Now.Ticks % 1000000L
+        log.LogWarning($"Seed: {seed}")
         $"Using random seed {DateTime.Now.Ticks % 1000000L}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion.
@@ -120,7 +124,8 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 0,6,12,18 * * *")>]   // four times a day at 00:15, 06:15, 12:15, and 18:15
         timer : TimerInfo,
         log : ILogger) =
-        createBot RandomThought.prompt log
+        let prompt = RandomThought.getPrompt log
+        createBot prompt log
             |> RandomThought.tryPost
             |> ignore
 
@@ -130,6 +135,7 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
-        createBot SixWordStory.prompt log
+        let prompt = RandomThought.getPrompt log
+        createBot prompt log
             |> SixWordStory.tryPost
             |> ignore
