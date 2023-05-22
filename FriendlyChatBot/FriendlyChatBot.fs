@@ -52,7 +52,11 @@ module RandomThought =
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                true, Post.submit "RandomThoughts" completion.Thought "" bot
+                if completion.Thought.ToLower().Contains("random") then
+                    bot.Log.LogError($"Not a random thought: {completion.Thought}")
+                    false, None
+                else
+                    true, Post.submit "RandomThoughts" completion.Thought "" bot
             with exn ->
                 bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
