@@ -90,19 +90,69 @@ module Bot =
                 | _ -> text
         FChatMessage.create role content
 
-    /// Subreddits in which a bot can post autonomously.
-    let private autonomousPostSubreddits =
-        set [
-            "RandomThoughts"
-            "self"
-            "sixwordstories"
-            "testingground4bots"
-        ]
+    /// Subreddit details.
+    type private SubredditDetail =
+        {
+            /// Bot can post autonomously?
+            AutonomousPost : bool
 
-    /// Additional subreddit information.
-    let private subredditInfoMap =
+            /// Comment prompt, if any.
+            CommentPromptOpt : Option<string>
+
+            /// Reply to /u/AutoModerator?
+            ReplyToAutoModerator : bool
+        }
+
+    /// Subreddit detail map.
+    type private SubredditDetailMap =
+        Map<string, SubredditDetail>
+
+    module private SubredditDetailMap =
+
+        /// Bot can post autonomously?
+        let isAutonomousPost subreddit (map : SubredditDetailMap) =
+            map
+                |> Map.tryFind subreddit
+                |> Option.map (fun detail ->
+                    detail.AutonomousPost)
+                |> Option.defaultValue false
+
+        /// Gets comment prompt for the given subreddit, if any.
+        let tryGetCommentPrompt subreddit (map : SubredditDetailMap) =
+            map
+                |> Map.tryFind subreddit
+                |> Option.bind (fun detail ->
+                    detail.CommentPromptOpt)
+
+        /// Bot should reply to comment?
+        let shouldReply (comment : Comment) (map : SubredditDetailMap) =
+            if comment.Author = "AutoModerator" then
+                map
+                    |> Map.tryFind comment.Subreddit
+                    |> Option.map (fun detail ->
+                        detail.ReplyToAutoModerator)
+                    |> Option.defaultValue true
+            else true
+
+    /// Subreddit details.
+    let private subredditDetailMap : SubredditDetailMap =
+        let autonomous =
+            {
+                AutonomousPost = true
+                CommentPromptOpt = None
+                ReplyToAutoModerator = true
+            }
         Map [
-            "sixwordstories", "It is customary, but not mandatory, to write a six-word response."
+            "RandomThoughts",
+                { autonomous with ReplyToAutoModerator = false }
+            "self", autonomous
+            "sixwordstories",
+                {
+                    autonomous with
+                        CommentPromptOpt =
+                            Some "It is customary, but not mandatory, to write a six-word response."
+                }
+            "testingground4bots", autonomous
         ]
 
     /// Creates messages describing the given subreddit.
@@ -112,9 +162,9 @@ module Bot =
                 // subreddit name
             yield createMsg $"Subreddit: {subreddit}"
 
-                // additional info?
-            match Map.tryFind subreddit subredditInfoMap with
-                | Some info -> yield createMsg info
+                // comment prompt?
+            match SubredditDetailMap.tryGetCommentPrompt subreddit subredditDetailMap with
+                | Some prompt -> yield createMsg prompt
                 | None -> ()
         }
 
@@ -156,7 +206,9 @@ module Bot =
                                 .About()
                         let isUserPost = getRole post.Author bot = Role.User
                         let isAutonomousSubreddit =
-                            autonomousPostSubreddits.Contains(post.Subreddit)
+                            SubredditDetailMap.isAutonomousPost
+                                post.Subreddit
+                                subredditDetailMap
 
                         if isUserPost || isAutonomousSubreddit then
                             yield! List.rev [   // will be unreversed at the end
@@ -199,8 +251,13 @@ module Bot =
                     |> Seq.exists (fun child ->
                         getRole child.Author bot = Role.Assistant)
 
-                // if not, begin to create a reply
-            if handled then CommentResult.Ignored
+                // should reply to comment?
+            let shouldReply =
+                SubredditDetailMap.shouldReply comment subredditDetailMap
+
+                // begin to create a reply?
+            if handled || not shouldReply then
+                CommentResult.Ignored
             else
                     // avoid deeply nested threads
                 let history = getHistory comment bot
