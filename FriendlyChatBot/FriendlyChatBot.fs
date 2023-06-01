@@ -129,7 +129,7 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         let prompt = RandomThought.getPrompt log
-        use bot = createBot replyPrompt log
+        use bot = createBot prompt log
         RandomThought.tryPost bot
             |> ignore
 
@@ -140,6 +140,6 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         let prompt = SixWordStory.getPrompt log
-        use bot = createBot replyPrompt log
+        use bot = createBot prompt log
         SixWordStory.tryPost bot
             |> ignore
