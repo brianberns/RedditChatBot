@@ -37,6 +37,11 @@ type Bot =
         Log : ILogger
     }
 
+    member bot.Dispose() = bot.ChatBot.Dispose()
+
+    interface IDisposable with
+        member bot.Dispose() = bot.Dispose()
+
 module Bot =
 
     (*

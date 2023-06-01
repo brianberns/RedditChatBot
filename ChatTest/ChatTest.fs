@@ -2,7 +2,7 @@
 
 open System
 open Microsoft.Extensions.Configuration
-open OpenAI.GPT3.ObjectModels
+open OpenAI.ObjectModels
 
 module ChatTest =
 

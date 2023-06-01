@@ -4,7 +4,7 @@ open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
-open OpenAI.GPT3.ObjectModels
+open OpenAI.ObjectModels
 
 /// Azure function type for dependency injection.
 type TypicalChatBot(config : IConfiguration) =
@@ -33,6 +33,6 @@ type TypicalChatBot(config : IConfiguration) =
         [<TimerTrigger("0 */1 * * * *")>]   // every minute
         timer : TimerInfo,
         log : ILogger) =
-        createBot log
-            |> Bot.monitorUnreadMessages
+        use bot = createBot log
+        Bot.monitorUnreadMessages bot
             |> ignore

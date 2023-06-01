@@ -1,8 +1,10 @@
 ﻿namespace RedditChatBot
 
-open OpenAI.GPT3
-open OpenAI.GPT3.Managers
-open OpenAI.GPT3.ObjectModels.RequestModels
+open System
+
+open OpenAI
+open OpenAI.Managers
+open OpenAI.ObjectModels.RequestModels
 
 /// OpenAI settings associated with this app. Don't share these!
 [<CLIMutable>]   // https://github.com/dotnet/runtime/issues/77677
@@ -80,16 +82,21 @@ type ChatBot =
         Client : OpenAIService
     }
 
+    member bot.Dispose() = bot.Client.Dispose()
+
+    interface IDisposable with
+        member bot.Dispose() = bot.Dispose()
+
 module ChatBot =
 
     /// Creates a chat bot.
     let create settings botDef =
+        let client =
+            let options = OpenAiOptions(ApiKey = settings.ApiKey)
+            new OpenAIService(options)
         {
             BotDef = botDef
-            Client =
-                OpenAiOptions(
-                    ApiKey = settings.ApiKey)
-                    |> OpenAIService
+            Client = client
         }
 
     /// Gets a response to the given chat history.

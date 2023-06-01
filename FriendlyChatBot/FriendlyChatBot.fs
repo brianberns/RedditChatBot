@@ -7,7 +7,7 @@ open Microsoft.Azure.WebJobs
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 
-open OpenAI.GPT3.ObjectModels
+open OpenAI.ObjectModels
 
 module Post =
 
@@ -118,8 +118,8 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 */30 * * * *")>]         // every 30 minutes at :00 and :30 after the hour
         timer : TimerInfo,
         log : ILogger) =
-        createBot replyPrompt log
-            |> Bot.monitorUnreadMessages
+        use bot = createBot replyPrompt log
+        Bot.monitorUnreadMessages bot
             |> ignore
 
     /// Posts a random thought.
@@ -129,8 +129,8 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         let prompt = RandomThought.getPrompt log
-        createBot prompt log
-            |> RandomThought.tryPost
+        use bot = createBot replyPrompt log
+        RandomThought.tryPost bot
             |> ignore
 
     /// Posts a six word story.
@@ -140,6 +140,6 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         let prompt = SixWordStory.getPrompt log
-        createBot prompt log
-            |> SixWordStory.tryPost
+        use bot = createBot replyPrompt log
+        SixWordStory.tryPost bot
             |> ignore
