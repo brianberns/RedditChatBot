@@ -158,6 +158,10 @@ module Bot =
             "RandomThoughts",
                 { autonomous with ReplyToAutoModerator = false }
             "self", autonomous
+            "twowordstories",
+                withCommentPrompt
+                    "Write a two-word response."
+                    autonomous
             "sixwordstories",
                 withCommentPrompt
                     "It is customary, but not mandatory, to write a six-word response."

@@ -170,6 +170,14 @@ type FriendlyChatBot(config : IConfiguration) =
         RandomThought.tryPost bot
             |> ignore
 
+    /// Posts a two-word story.
+    [<FunctionName("PostTwoWordStory")>]
+    member _.PostTwoWordStory(
+        [<TimerTrigger("0 15 19 * * *")>]          // once a day at 19:15
+        timer : TimerInfo,
+        log : ILogger) =
+        NumWordStory.run 2 createBot log
+
     /// Posts a six word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
