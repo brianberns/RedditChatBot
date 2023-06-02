@@ -11,6 +11,12 @@ open OpenAI.ObjectModels
 
 module Post =
 
+    /// Gets a random seed.
+    let getSeed (log : ILogger) =
+        let seed = DateTime.Now.Ticks % 1000000L
+        log.LogWarning($"Seed: {seed}")
+        seed
+
     /// # of retry attempts.
     let numTries = 3
 
@@ -37,9 +43,8 @@ module Post =
 module RandomThought =
 
     /// Random thought prompt.
-    let getPrompt (log : ILogger) =
-        let seed = DateTime.Now.Ticks % 1000000L
-        log.LogWarning($"Seed: {seed}")
+    let getPrompt log =
+        let seed = Post.getSeed log
         $"Using random seed {seed}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
 
     /// Structure of a completion.
@@ -65,9 +70,8 @@ module RandomThought =
 module SixWordStory =
 
     /// Six-word story prompt.
-    let getPrompt (log : ILogger) =
-        let seed = DateTime.Now.Ticks % 1000000L
-        log.LogWarning($"Seed: {seed}")
+    let getPrompt log =
+        let seed = Post.getSeed log
         $"Using random seed {seed}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion.
