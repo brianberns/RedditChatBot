@@ -57,7 +57,8 @@ module RandomThought =
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                if completion.Thought.ToLower().Contains("random") then
+                let thought = completion.Thought.ToLower()
+                if thought.Contains("random") || thought.Contains("seed") then
                     bot.Log.LogError($"Not a random thought: {completion.Thought}")
                     false, None
                 else
