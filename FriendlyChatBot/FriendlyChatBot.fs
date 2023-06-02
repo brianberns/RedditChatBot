@@ -91,6 +91,7 @@ module NumWordStory =
     let private defs =
         [
             define 2 "two"
+            define 5 "five"
             define 6 "six"
         ]
 
@@ -174,10 +175,18 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Posts a two-word story.
     [<FunctionName("PostTwoWordStory")>]
     member _.PostTwoWordStory(
-        [<TimerTrigger("0 15 19 * * *")>]          // once a day at 19:15
+        [<TimerTrigger("0 15 21 * * *")>]          // once a day at 21:15
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 2 createBot log
+
+    /// Posts a five-word story.
+    [<FunctionName("PostFiveWordStory")>]
+    member _.PostFiveWordStory(
+        [<TimerTrigger("0 15 22 * * *")>]          // once a day at 22:15
+        timer : TimerInfo,
+        log : ILogger) =
+        NumWordStory.run 5 createBot log
 
     /// Posts a six-word story.
     [<FunctionName("PostSixWordStory")>]

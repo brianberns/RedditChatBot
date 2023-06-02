@@ -162,6 +162,10 @@ module Bot =
                 withCommentPrompt
                     "Write a two-word response."
                     autonomous
+            "fivewordstories",
+                withCommentPrompt
+                    "It is customary, but not mandatory, to write a five-word response."
+                    autonomous
             "sixwordstories",
                 withCommentPrompt
                     "It is customary, but not mandatory, to write a six-word response."
