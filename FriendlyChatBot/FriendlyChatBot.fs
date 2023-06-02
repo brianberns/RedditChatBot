@@ -90,6 +90,7 @@ module NumWordStory =
     /// Num-word story definitions.
     let private defs =
         [
+            define 2 "two"
             define 6 "six"
         ]
 
@@ -178,7 +179,7 @@ type FriendlyChatBot(config : IConfiguration) =
         log : ILogger) =
         NumWordStory.run 2 createBot log
 
-    /// Posts a six word story.
+    /// Posts a six-word story.
     [<FunctionName("PostSixWordStory")>]
     member _.PostSixWordStory(
         [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
