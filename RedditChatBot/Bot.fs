@@ -139,6 +139,13 @@ module Bot =
                     |> Option.defaultValue true
             else true
 
+    /// Specifies a comment prompt.
+    let private withCommentPrompt prompt detail =
+        {
+            detail with
+                CommentPromptOpt = Some prompt
+        }
+
     /// Subreddit details.
     let private subredditDetailMap : SubredditDetailMap =
         let autonomous =
@@ -152,11 +159,9 @@ module Bot =
                 { autonomous with ReplyToAutoModerator = false }
             "self", autonomous
             "sixwordstories",
-                {
-                    autonomous with
-                        CommentPromptOpt =
-                            Some "It is customary, but not mandatory, to write a six-word response."
-                }
+                withCommentPrompt
+                    "It is customary, but not mandatory, to write a six-word response."
+                    autonomous
             "testingground4bots", autonomous
         ]
 

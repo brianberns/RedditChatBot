@@ -48,7 +48,7 @@ module RandomThought =
         $"Using random seed {seed}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
 
     /// Structure of a completion.
-    type Completion = { Thought : string }
+    type private Completion = { Thought : string }
 
     /// Tries to post a random thought.
     let tryPost bot =
@@ -68,33 +68,65 @@ module RandomThought =
                 Bot.handleException exn bot.Log
                 false, None)
 
-module SixWordStory =
+/// A type of story consisting of N words.
+type NumWordStoryDef =
+    {
+        /// Number of words in a story.
+        NumWords : int
 
-    /// Six-word story prompt.
-    let getPrompt log =
+        /// Number name. (E.g. "six".)
+        Name : string
+    }
+
+module NumWordStory =
+
+    /// Creates a num-word story definition.
+    let private define numWords name =
+        {
+            NumWords = numWords
+            Name = name
+        }
+
+    /// Num-word story definitions.
+    let private defs =
+        [
+            define 6 "six"
+        ]
+
+    /// Num-word story prompt.
+    let private getPrompt def log =
         let seed = Post.getSeed log
-        $"Using random seed {seed}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
+        $"Using random seed {seed}, write a {def.Name}-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion.
-    type Completion = { Story : string }
+    type private Completion = { Story : string }
 
-    /// Tries to post a six-word story.
-    let tryPost bot =
+    /// Tries to post a num-word story.
+    let private tryPost def bot =
         Bot.tryN Post.numTries (fun _ ->
             let json =
                 ChatBot.complete [] bot.ChatBot
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                if completion.Story.Split(' ').Length = 6 then
-                    true, Post.submit "sixwordstories" completion.Story "" bot
+                if completion.Story.Split(' ').Length = def.NumWords then
+                    true, Post.submit $"{def.Name}wordstories" completion.Story "" bot
                 else
-                    bot.Log.LogError($"Not a six-word story: {completion.Story}")
+                    bot.Log.LogError($"Not a {def.Name}-word story: {completion.Story}")
                     false, None
             with exn ->
                 bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
                 false, None)
+
+    /// Creates and runs a bot for the given number of words.
+    let run numWords createBot log =
+        let def =
+            Seq.find (fun def -> def.NumWords = numWords) defs
+        use bot =
+            let prompt = getPrompt def log
+            createBot prompt log
+        tryPost def bot |> ignore
 
 /// Azure function type for dependency injection.
 type FriendlyChatBot(config : IConfiguration) =
@@ -144,7 +176,4 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
-        let prompt = SixWordStory.getPrompt log
-        use bot = createBot prompt log
-        SixWordStory.tryPost bot
-            |> ignore
+        NumWordStory.run 6 createBot log
