@@ -200,7 +200,7 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Posts a seven-word story.
     [<FunctionName("PostSevenWordStory")>]
     member _.PostSevenWordStory(
-        [<TimerTrigger("0 15 01 * * *")>]          // once a day at 01:15
+        [<TimerTrigger("0 15 1 * * *")>]           // once a day at 01:15
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 7 createBot log
@@ -208,7 +208,7 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Posts an eight-word story.
     [<FunctionName("PostEightWordStory")>]
     member _.PostEightWordStory(
-        [<TimerTrigger("0 15 02 * * *")>]          // once a day at 02:15
+        [<TimerTrigger("0 15 2 * * *")>]           // once a day at 02:15
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 8 createBot log
@@ -216,7 +216,15 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Posts a nine-word story.
     [<FunctionName("PostNineWordStory")>]
     member _.PostNineWordStory(
-        [<TimerTrigger("0 15 03 * * *")>]          // once a day at 03:15
+        [<TimerTrigger("0 15 3 * * *")>]           // once a day at 03:15
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 9 createBot log
+
+    /// Posts a ten-word story.
+    [<FunctionName("PostTenWordStory")>]
+    member _.PostTenWordStory(
+        [<TimerTrigger("0 15 4 * * *")>]           // once a day at 04:15
+        timer : TimerInfo,
+        log : ILogger) =
+        NumWordStory.run 10 createBot log

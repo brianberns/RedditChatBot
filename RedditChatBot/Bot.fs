@@ -182,6 +182,10 @@ module Bot =
                 withCommentPrompt
                     "Write a six-word response."   // Comments must be exactly six words. (Not nine.)
                     autonomous
+            "tenwordstories",
+                withCommentPrompt
+                    "It is customary, but not mandatory, to write a ten-word response."
+                    autonomous
             "testingground4bots", autonomous
         ]
 
