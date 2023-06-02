@@ -90,9 +90,18 @@ module NumWordStory =
     /// Num-word story definitions.
     let private defs =
         [
+            define 1 "one"
             define 2 "two"
+            define 3 "three"
+            define 4 "four"
             define 5 "five"
             define 6 "six"
+            define 7 "seven"
+            define 8 "eight"
+            define 9 "nine"
+            define 10 "ten"
+            define 11 "eleven"
+            define 12 "twelve"
         ]
 
     /// Num-word story prompt.
@@ -172,14 +181,6 @@ type FriendlyChatBot(config : IConfiguration) =
         RandomThought.tryPost bot
             |> ignore
 
-    /// Posts a two-word story.
-    [<FunctionName("PostTwoWordStory")>]
-    member _.PostTwoWordStory(
-        [<TimerTrigger("0 15 21 * * *")>]          // once a day at 21:15
-        timer : TimerInfo,
-        log : ILogger) =
-        NumWordStory.run 2 createBot log
-
     /// Posts a five-word story.
     [<FunctionName("PostFiveWordStory")>]
     member _.PostFiveWordStory(
@@ -195,3 +196,11 @@ type FriendlyChatBot(config : IConfiguration) =
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 6 createBot log
+
+    /// Posts a seven-word story.
+    [<FunctionName("PostSevenWordStory")>]
+    member _.PostSevenWordStory(
+        [<TimerTrigger("0 15 00 * * *")>]          // once a day at 00:15
+        timer : TimerInfo,
+        log : ILogger) =
+        NumWordStory.run 7 createBot log

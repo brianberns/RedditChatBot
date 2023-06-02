@@ -170,6 +170,10 @@ module Bot =
                 withCommentPrompt
                     "It is customary, but not mandatory, to write a six-word response."
                     autonomous
+            "sevenwordstories",
+                withCommentPrompt
+                    "It is customary, but not mandatory, to write a seven-word response."
+                    autonomous
             "testingground4bots", autonomous
         ]
 
