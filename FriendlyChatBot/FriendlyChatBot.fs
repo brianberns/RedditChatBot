@@ -47,8 +47,8 @@ module RandomThought =
         let seed = Post.getSeed log
         $"Using random seed {seed}, write a one-sentence thought to post on Reddit. Avoid politics and religion. The thought should be in the form of a statement, not a question. Output as JSON: {{ \"Thought\" : string }}."
 
-    /// Structure of a completion.
-    type private Completion = { Thought : string }
+    /// Structure of a completion. Must be public for serialization.
+    type Completion = { Thought : string }
 
     /// Tries to post a random thought.
     let tryPost bot =
@@ -99,8 +99,8 @@ module NumWordStory =
         let seed = Post.getSeed log
         $"Using random seed {seed}, write a {def.Name}-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
-    /// Structure of a completion.
-    type private Completion = { Story : string }
+    /// Structure of a completion. Must be public for serialization.
+    type Completion = { Story : string }
 
     /// Tries to post a num-word story.
     let private tryPost def bot =
