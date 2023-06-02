@@ -200,7 +200,7 @@ type FriendlyChatBot(config : IConfiguration) =
     /// Posts a seven-word story.
     [<FunctionName("PostSevenWordStory")>]
     member _.PostSevenWordStory(
-        [<TimerTrigger("0 15 00 * * *")>]          // once a day at 00:15
+        [<TimerTrigger("0 15 01 * * *")>]          // once a day at 01:15
         timer : TimerInfo,
         log : ILogger) =
         NumWordStory.run 7 createBot log
