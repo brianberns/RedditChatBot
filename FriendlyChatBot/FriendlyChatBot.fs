@@ -197,14 +197,6 @@ type FriendlyChatBot(config : IConfiguration) =
         log : ILogger) =
         NumWordStory.run 6 createBot log
 
-    /// Posts a seven-word story.
-    [<FunctionName("PostSevenWordStory")>]
-    member _.PostSevenWordStory(
-        [<TimerTrigger("0 15 1 * * *")>]           // once a day at 01:15
-        timer : TimerInfo,
-        log : ILogger) =
-        NumWordStory.run 7 createBot log
-
     /// Posts an eight-word story.
     [<FunctionName("PostEightWordStory")>]
     member _.PostEightWordStory(
