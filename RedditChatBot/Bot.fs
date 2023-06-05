@@ -158,34 +158,12 @@ module Bot =
             "RandomThoughts",
                 { autonomous with ReplyToAutoModerator = false }
             "self", autonomous
-            "twowordstories",
-                withCommentPrompt
-                    "Write a two-word response."
-                    autonomous
-            "fivewordstories",
-                withCommentPrompt
-                    "It is customary, but not mandatory, to write a five-word response."
-                    autonomous
             "sixwordstories",
-                withCommentPrompt
-                    "It is customary, but not mandatory, to write a six-word response."
-                    autonomous
-            "sevenwordstories",
-                withCommentPrompt
-                    "It is customary, but not mandatory, to write a seven-word response."
-                    autonomous
-            "eightwordstories",
-                withCommentPrompt
-                    "It is customary, but not mandatory, to write a eight-word response."
-                    autonomous
-            "ninewordstories",
-                withCommentPrompt
-                    "Write a six-word response."   // Comments must be exactly six words. (Not nine.)
-                    autonomous
-            "tenwordstories",
-                withCommentPrompt
-                    "It is customary, but not mandatory, to write a ten-word response."
-                    autonomous
+                {
+                    autonomous with
+                        CommentPromptOpt =
+                            Some "It is customary, but not mandatory, to write a six-word response."
+                }
             "testingground4bots", autonomous
         ]
 

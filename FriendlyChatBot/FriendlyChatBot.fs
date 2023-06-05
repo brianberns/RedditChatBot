@@ -68,73 +68,33 @@ module RandomThought =
                 Bot.handleException exn bot.Log
                 false, None)
 
-/// A type of story consisting of N words.
-type NumWordStoryDef =
-    {
-        /// Number of words desired in a story.
-        NumWordsDesired : int
-
-        /// Number name. (E.g. "six".)
-        Name : string
-
-        /// Number of words required to get the desired result.
-        /// GPT-4 is usually off by one for stories of 8+ words.
-        NumWordsRequired : int
-    }
-
-module NumWordStory =
-
-    /// Creates a num-word story definition.
-    let private define numWordsDesired name numWordsRequired =
-        {
-            NumWordsDesired = numWordsDesired
-            Name = name
-            NumWordsRequired = numWordsRequired
-        }
-
-    /// Num-word story definitions.
-    let private defs =
-        [
-            define  6 "six"    6
-            define  8 "eight"  9
-            define  9 "nine"  10
-            define 10 "ten"   11
-        ]
+module SixWordStory =
 
     /// Num-word story prompt.
-    let private getPrompt def log =
+    let getPrompt log =
         let seed = Post.getSeed log
-        $"Using random seed {seed}, write a {def.NumWordsRequired}-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
+        $"Using random seed {seed}, write a six-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion. Must be public for serialization.
     type Completion = { Story : string }
 
-    /// Tries to post a num-word story.
-    let private tryPost def bot =
+    /// Tries to post a six-word story.
+    let tryPost bot =
         Bot.tryN Post.numTries (fun _ ->
             let json =
                 ChatBot.complete [] bot.ChatBot
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                if completion.Story.Split(' ').Length = def.NumWordsDesired then
-                    true, Post.submit $"{def.Name}wordstories" completion.Story "" bot
+                if completion.Story.Split(' ').Length = 6 then
+                    true, Post.submit $"sixwordstories" completion.Story "" bot
                 else
-                    bot.Log.LogError($"Not a {def.Name}-word story: {completion.Story}")
+                    bot.Log.LogError($"Not a six-word story: {completion.Story}")
                     false, None
             with exn ->
                 bot.Log.LogError(json)
                 Bot.handleException exn bot.Log
                 false, None)
-
-    /// Creates and runs a bot for the given number of words.
-    let run numWords createBot log =
-        let def =
-            Seq.find (fun def -> def.NumWordsDesired = numWords) defs
-        use bot =
-            let prompt = getPrompt def log
-            createBot prompt log
-        tryPost def bot |> ignore
 
 /// Azure function type for dependency injection.
 type FriendlyChatBot(config : IConfiguration) =
@@ -173,8 +133,9 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 0,6,12,18 * * *")>]   // four times a day at 00:15, 06:15, 12:15, and 18:15
         timer : TimerInfo,
         log : ILogger) =
-        let prompt = RandomThought.getPrompt log
-        use bot = createBot prompt log
+        use bot =
+            let prompt = RandomThought.getPrompt log
+            createBot prompt log
         RandomThought.tryPost bot
             |> ignore
 
@@ -184,28 +145,8 @@ type FriendlyChatBot(config : IConfiguration) =
         [<TimerTrigger("0 15 23 * * *")>]          // once a day at 23:15
         timer : TimerInfo,
         log : ILogger) =
-        NumWordStory.run 6 createBot log
-
-    /// Posts an eight-word story.
-    [<FunctionName("PostEightWordStory")>]
-    member _.PostEightWordStory(
-        [<TimerTrigger("0 15 2 * * *")>]           // once a day at 02:15
-        timer : TimerInfo,
-        log : ILogger) =
-        NumWordStory.run 8 createBot log
-
-    /// Posts a nine-word story.
-    [<FunctionName("PostNineWordStory")>]
-    member _.PostNineWordStory(
-        [<TimerTrigger("0 15 3 * * *")>]           // once a day at 03:15
-        timer : TimerInfo,
-        log : ILogger) =
-        NumWordStory.run 9 createBot log
-
-    /// Posts a ten-word story.
-    [<FunctionName("PostTenWordStory")>]
-    member _.PostTenWordStory(
-        [<TimerTrigger("0 15 4 * * *")>]           // once a day at 04:15
-        timer : TimerInfo,
-        log : ILogger) =
-        NumWordStory.run 10 createBot log
+        use bot =
+            let prompt = SixWordStory.getPrompt log
+            createBot prompt log
+        SixWordStory.tryPost bot
+            |> ignore
