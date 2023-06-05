@@ -90,18 +90,10 @@ module NumWordStory =
     /// Num-word story definitions.
     let private defs =
         [
-            define 1 "one"
-            define 2 "two"
-            define 3 "three"
-            define 4 "four"
-            define 5 "five"
             define 6 "six"
-            define 7 "seven"
-            define 8 "eight"
-            define 9 "nine"
-            define 10 "ten"
-            define 11 "eleven"
-            define 12 "twelve"
+            define 9 "eight"   // GPT-4 is usually off by one for stories of 8+ words
+            define 10 "nine"
+            define 11 "ten"
         ]
 
     /// Num-word story prompt.
