@@ -71,35 +71,40 @@ module RandomThought =
 /// A type of story consisting of N words.
 type NumWordStoryDef =
     {
-        /// Number of words in a story.
-        NumWords : int
+        /// Number of words desired in a story.
+        NumWordsDesired : int
 
         /// Number name. (E.g. "six".)
         Name : string
+
+        /// Number of words required to get the desired result.
+        /// GPT-4 is usually off by one for stories of 8+ words.
+        NumWordsRequired : int
     }
 
 module NumWordStory =
 
     /// Creates a num-word story definition.
-    let private define numWords name =
+    let private define numWordsDesired name numWordsRequired =
         {
-            NumWords = numWords
+            NumWordsDesired = numWordsDesired
             Name = name
+            NumWordsRequired = numWordsRequired
         }
 
     /// Num-word story definitions.
     let private defs =
         [
-            define 6 "six"
-            define 9 "eight"   // GPT-4 is usually off by one for stories of 8+ words
-            define 10 "nine"
-            define 11 "ten"
+            define  6 "six"    6
+            define  8 "eight"  9
+            define  9 "nine"  10
+            define 10 "ten"   11
         ]
 
     /// Num-word story prompt.
     let private getPrompt def log =
         let seed = Post.getSeed log
-        $"Using random seed {seed}, write a {def.Name}-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
+        $"Using random seed {seed}, write a {def.NumWordsRequired}-word story to post on Reddit. Output as JSON: {{ \"Story\" : string }}."
 
     /// Structure of a completion. Must be public for serialization.
     type Completion = { Story : string }
@@ -112,7 +117,7 @@ module NumWordStory =
             try
                 let completion =
                     JsonSerializer.Deserialize<Completion>(json)
-                if completion.Story.Split(' ').Length = def.NumWords then
+                if completion.Story.Split(' ').Length = def.NumWordsDesired then
                     true, Post.submit $"{def.Name}wordstories" completion.Story "" bot
                 else
                     bot.Log.LogError($"Not a {def.Name}-word story: {completion.Story}")
@@ -125,7 +130,7 @@ module NumWordStory =
     /// Creates and runs a bot for the given number of words.
     let run numWords createBot log =
         let def =
-            Seq.find (fun def -> def.NumWords = numWords) defs
+            Seq.find (fun def -> def.NumWordsDesired = numWords) defs
         use bot =
             let prompt = getPrompt def log
             createBot prompt log
